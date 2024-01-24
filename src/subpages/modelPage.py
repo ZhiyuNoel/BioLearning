@@ -10,24 +10,35 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 from .Pages import Pages
 
 class Ui_model(Pages):
-    def __init__(self, inpPage):
+    def __init__(self, Form):
         super().__init__()
-        inpPage.setObjectName("Input Page")
-        inpPage.resize(611, 531)
-        self.textEdit = QtWidgets.QTextEdit(parent=inpPage)
-        self.textEdit.setGeometry(QtCore.QRect(10, 10, 81, 31))
-        self.textEdit.setObjectName("textEdit")
-        self.retranslateUi(inpPage)
-        QtCore.QMetaObject.connectSlotsByName(inpPage)
+        Form.setObjectName("Form")
+        Form.resize(800, 528)
+        self.tabWidget = QtWidgets.QTabWidget(parent=Form)
+        self.tabWidget.setGeometry(QtCore.QRect(5, 5, 790, 508))
+        self.tabWidget.setObjectName("tabWidget")
+        self.default = QtWidgets.QWidget()
+        self.default.setObjectName("tab")
+        self.tabWidget.addTab(self.default, "")
+        self.prebuilt = QtWidgets.QWidget()
+        self.prebuilt.setObjectName("tab_2")
+        self.tabWidget.addTab(self.prebuilt, "")
+        self.custom = QtWidgets.QWidget()
+        self.custom.setObjectName("tab_3")
+        self.tabWidget.addTab(self.custom, "")
+        self.loadModel = QtWidgets.QWidget()
+        self.loadModel.setObjectName("tab_3")
+        self.tabWidget.addTab(self.loadModel, "")
+
+        self.retranslateUi(Form)
+        self.tabWidget.setCurrentIndex(1)
+        QtCore.QMetaObject.connectSlotsByName(Form)
 
     def retranslateUi(self, Form):
         _translate = QtCore.QCoreApplication.translate
         Form.setWindowTitle(_translate("Form", "Form"))
-        self.textEdit.setHtml(_translate("Form", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
-        "<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /><style type=\"text/css\">\n"
-        "p, li { white-space: pre-wrap; }\n"
-        "hr { height: 1px; border-width: 0; }\n"
-        "li.unchecked::marker { content: \"\\2610\"; }\n"
-        "li.checked::marker { content: \"\\2612\"; }\n"
-        "</style></head><body style=\" font-family:\'.AppleSystemUIFont\'; font-size:13pt; font-weight:400; font-style:normal;\">\n"
-        "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">model page</p></body></html>"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.default), _translate("Form", "Default Model"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.prebuilt), _translate("Form", "Prebuilt Model"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.custom), _translate("Form", "Customize Model"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.loadModel), _translate("Form", "Load Model"))
+

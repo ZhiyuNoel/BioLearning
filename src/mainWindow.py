@@ -8,11 +8,13 @@
 
 from PyQt6 import QtCore, QtWidgets
 from PyQt6.QtWidgets import QMainWindow
-from src.subpages import (Ui_inputpage, Ui_outputpage, Ui_model, Ui_encoder,
+from src.subpages import (Ui_inputpage, Ui_model, Ui_encoder,
                           Ui_pred, Ui_time, Ui_eveModel, Ui_evePre, Ui_eveEncoder, Ui_inter)
 
 
 class Ui_MainWindow(QMainWindow):
+
+    mean_buttons = []
     def __init__(self, MainWindow):
         super().__init__()
         MainWindow.setObjectName("MainWindow")
@@ -158,15 +160,17 @@ class Ui_MainWindow(QMainWindow):
         self.interpretationButton.clicked.connect(
             lambda: self.print_in_textBrowser("Click the select interpretation button"))
 
+
+
         self.inputButton.clicked.connect(lambda: self.page_switch_clicked(0))
-        self.modelButton.clicked.connect(lambda: self.page_switch_clicked(2))
-        self.autoencodeButton.clicked.connect(lambda: self.page_switch_clicked(3))
-        self.predictorButton.clicked.connect(lambda: self.page_switch_clicked(4))
-        self.timeButton.clicked.connect(lambda: self.page_switch_clicked(5))
-        self.eventModelButton.clicked.connect(lambda: self.page_switch_clicked(6))
-        self.eventPredictorButton.clicked.connect(lambda: self.page_switch_clicked(7))
-        self.eventEncoderButton.clicked.connect(lambda: self.page_switch_clicked(8))
-        self.interpretationButton.clicked.connect(lambda: self.page_switch_clicked(9))
+        self.modelButton.clicked.connect(lambda: self.page_switch_clicked(1))
+        self.autoencodeButton.clicked.connect(lambda: self.page_switch_clicked(2))
+        self.predictorButton.clicked.connect(lambda: self.page_switch_clicked(3))
+        self.timeButton.clicked.connect(lambda: self.page_switch_clicked(4))
+        self.eventModelButton.clicked.connect(lambda: self.page_switch_clicked(5))
+        self.eventPredictorButton.clicked.connect(lambda: self.page_switch_clicked(6))
+        self.eventEncoderButton.clicked.connect(lambda: self.page_switch_clicked(7))
+        self.interpretationButton.clicked.connect(lambda: self.page_switch_clicked(8))
 
     def print_in_textBrowser(self, text):
         self.textBrowser.setText(text)

@@ -13,7 +13,9 @@ from .Pages import Pages
 
 from src import videoPlay
 
-
+'''
+The components and function implementations for the input page
+'''
 class Ui_inputpage(Pages):
     _signal = pyqtSignal(str)
     text = ""
@@ -45,7 +47,7 @@ class Ui_inputpage(Pages):
 
         self.select = QtWidgets.QPushButton(parent=self.outerLayout)
         self.select.setObjectName("pushButton_3")
-        self.select.clicked.connect(lambda: self.choose_video())
+        self.select.clicked.connect(lambda: self.choose_file())
         self.horizontalLayout_2.addWidget(self.select)
 
         self.next = QtWidgets.QPushButton(parent=self.outerLayout)
@@ -69,13 +71,11 @@ class Ui_inputpage(Pages):
         self.label.setEnabled(False)
         self.verticalLayout_2.addWidget(self.label)
 
-
         self.yaml = QtWidgets.QPushButton(parent=self.outerLayout)
         self.yaml.setMinimumSize(QtCore.QSize(100, 50))
         self.yaml.setObjectName("pushButton_5")
         self.yaml.clicked.connect(lambda: self.choose_yaml())
         self.verticalLayout_2.addWidget(self.yaml)
-
 
         self.sample = QtWidgets.QPushButton(parent=self.outerLayout)
         self.sample.setMinimumSize(QtCore.QSize(100, 50))
@@ -101,14 +101,15 @@ class Ui_inputpage(Pages):
         self.clearInput.setText(_translate("Form", "Clear Input"))
         self.previous.setVisible(False)
         self.next.setVisible(False)
-        self.next.clicked.connect(lambda: self.next_click())
-        self.previous.clicked.connect(lambda: self.previous_click())
-        self.select.clicked.connect(lambda: self.send_data(self.text))
-        self.label.clicked.connect(lambda: self.send_data(self.text))
         self.label.setText(_translate("Form", " Select Label"))
         self.yaml.setText(_translate("Form", "Load Yaml"))
         self.sample.setText(_translate("Form", "Load Sample"))
         self.clearInput.clicked.connect(lambda: self.send_data(self.text))
+        self.sample.clicked.connect(lambda: self.load_samples())
+        self.next.clicked.connect(lambda: self.next_click())
+        self.previous.clicked.connect(lambda: self.previous_click())
+        self.select.clicked.connect(lambda: self.send_data(self.text))
+        self.label.clicked.connect(lambda: self.send_data(self.text))
 
     def set_video(self, fileurl, videopage):
         if fileurl == None:
@@ -116,11 +117,23 @@ class Ui_inputpage(Pages):
         else:
             videopage.set_video(fileurl, videoPlay.VideoWidget.VIDEO_TYPE_OFFLINE, False)
 
-    def choose_video(self):  # 槽函数
+    def choose_file(self):  # 槽函数
+        isVideo = True
         fileName, fileType = QFileDialog.getOpenFileNames(self, "Select File", "",
-                                                          "MP4 Files(*.mp4);;AVI Files(*.avi)")
+                                                          "All Files(*)")
         if len(fileName) == 0:
             return
+        for file in fileName:
+            print(file.split(".")[-1])
+            if file.split(".")[-1] != 'avi' and file.split(".")[-1] != 'mp4':
+                isVideo = False
+        if isVideo:
+            self.load_video(fileName)
+        else:
+            self.text = "Not Video"
+            return
+
+    def load_video(self, fileName):
         self.text = "Your Input Videos: \n"
         self.label.setEnabled(True)
         self.yaml.setEnabled(False)
@@ -136,7 +149,6 @@ class Ui_inputpage(Pages):
             self.set_video(file, videopage)
             self.text += ("\n" + file.split("/")[-1])
             self.input_dict[file] = ''
-
 
     def choose_label(self):
         fileName, fileType = QFileDialog.getOpenFileNames(self, "Select File", "",
@@ -154,15 +166,15 @@ class Ui_inputpage(Pages):
             self.input_dict[video_file] = label_file
             self.text += ("Video: " + video_file.split("/")[-1] + "  Label: " + label_file.split("/")[-1] + "\n")
 
-
     def choose_yaml(self):
-        fileName, fileType = QFileDialog.getOpenFileName(self, "Select File", "",
+        yamlFile, _ = QFileDialog.getOpenFileName(self, "Select File", "",
                                                          "YAML Files(*.yaml)")
-        if fileName == "":
+        if yamlFile == "":
             print("Quit Choose")
             return
         self.select.setEnabled(False)
-
+        self.sample.setEnabled(False)
+        self.read_yaml(yamlFile)
 
     def next_click(self):
         if self.file_index < self.num_file - 1:
@@ -206,3 +218,21 @@ class Ui_inputpage(Pages):
     @property
     def signal(self):
         return self._signal
+
+    '''
+        Description: A prepared interface for yaml file read(Not implemented)
+        input: the absolute root path of .yaml file: yamlFile
+        output: The path of input videos and input labels
+        '''
+
+    def read_yaml(self, yamlFile):
+        return
+
+    '''
+    Description: A prepared interface for sample given
+    input: N/A
+    output: Load the sample videos and labels in form of dictionary pairs
+    '''
+
+    def load_samples(self):
+        return
