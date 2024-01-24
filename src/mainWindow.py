@@ -44,12 +44,6 @@ class Ui_MainWindow(QMainWindow):
         self.inputButton.setObjectName("pushButton")
         self.buttonLayout.addWidget(self.inputButton)
 
-        ## Select Output button
-        self.outputButton = QtWidgets.QPushButton(parent=self.verticalLayoutWidget_2)
-        self.outputButton.setMinimumSize(QtCore.QSize(0, 50))
-        self.outputButton.setObjectName("pushButton_3")
-        self.buttonLayout.addWidget(self.outputButton)
-
         ## Model Selection Button
         self.modelButton = QtWidgets.QPushButton(parent=self.verticalLayoutWidget_2)
         self.modelButton.setMinimumSize(QtCore.QSize(0, 50))
@@ -109,7 +103,7 @@ class Ui_MainWindow(QMainWindow):
         self.subpage.setObjectName("stackedWidget")
         self.subpage.setSizePolicy(policy_subpage)
 
-        pages = [Ui_inputpage, Ui_outputpage, Ui_model, Ui_encoder, Ui_pred, Ui_time, Ui_eveModel,
+        pages = [Ui_inputpage, Ui_model, Ui_encoder, Ui_pred, Ui_time, Ui_eveModel,
                  Ui_evePre, Ui_eveEncoder, Ui_inter]
         for page in pages:
             self.insertpage = QtWidgets.QWidget()
@@ -141,7 +135,6 @@ class Ui_MainWindow(QMainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
         self.inputButton.setText(_translate("MainWindow", "Select Input"))
-        self.outputButton.setText(_translate("MainWindow", "Select Output"))
         self.modelButton.setText(_translate("MainWindow", "Select Model"))
         self.autoencodeButton.setText(_translate("MainWindow", "Train Autoencoder"))
         self.predictorButton.setText(_translate("MainWindow", "Train Predictor"))
@@ -155,7 +148,6 @@ class Ui_MainWindow(QMainWindow):
         self.predictorButton.clicked.connect(lambda: self.print_in_textBrowser("Click the train prediction button"))
         self.autoencodeButton.clicked.connect(lambda: self.print_in_textBrowser("Click the train autoencoder button"))
         self.modelButton.clicked.connect(lambda: self.print_in_textBrowser("Click the select model button"))
-        self.outputButton.clicked.connect(lambda: self.print_in_textBrowser("Click the select output button"))
         self.inputButton.clicked.connect(lambda: self.print_in_textBrowser("Click the select input button"))
         self.timeButton.clicked.connect(lambda: self.print_in_textBrowser("Click the select time button"))
         self.eventModelButton.clicked.connect(lambda: self.print_in_textBrowser("Click the select event model button"))
@@ -167,7 +159,6 @@ class Ui_MainWindow(QMainWindow):
             lambda: self.print_in_textBrowser("Click the select interpretation button"))
 
         self.inputButton.clicked.connect(lambda: self.page_switch_clicked(0))
-        self.outputButton.clicked.connect(lambda: self.page_switch_clicked(1))
         self.modelButton.clicked.connect(lambda: self.page_switch_clicked(2))
         self.autoencodeButton.clicked.connect(lambda: self.page_switch_clicked(3))
         self.predictorButton.clicked.connect(lambda: self.page_switch_clicked(4))
