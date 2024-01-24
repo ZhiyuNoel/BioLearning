@@ -11,6 +11,7 @@ from PyQt6.QtWidgets import QMainWindow
 from src.subpages import (Ui_inputpage, Ui_outputpage, Ui_model, Ui_encoder,
                           Ui_pred, Ui_time, Ui_eveModel, Ui_evePre, Ui_eveEncoder, Ui_inter)
 
+
 class Ui_MainWindow(QMainWindow):
     def __init__(self, MainWindow):
         super().__init__()
@@ -32,10 +33,9 @@ class Ui_MainWindow(QMainWindow):
         self.horizontalLayout_2 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_2.setObjectName("horizontalLayout_2")
 
-
         self.buttonLayout = QtWidgets.QVBoxLayout()
         self.buttonLayout.setSizeConstraint(QtWidgets.QLayout.SizeConstraint.SetMinimumSize)
-        self.buttonLayout.setSpacing(0)
+        self.buttonLayout.setSpacing(20)
         self.buttonLayout.setObjectName("verticalLayout")
 
         ## Select input button
@@ -120,18 +120,15 @@ class Ui_MainWindow(QMainWindow):
         self.horizontalLayout_2.addWidget(self.subpage)
         self.verticalLayout_2.addLayout(self.horizontalLayout_2)
 
-
         self.textBrowser = QtWidgets.QTextBrowser(parent=self.verticalLayoutWidget_2)
         self.textBrowser.setObjectName("textBrowser")
         self.verticalLayout_2.addWidget(self.textBrowser)
         MainWindow.setCentralWidget(self.centralwidget)
 
-
         self.menubar = QtWidgets.QMenuBar(parent=MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 1000, 21))
         self.menubar.setObjectName("menubar")
         MainWindow.setMenuBar(self.menubar)
-
 
         self.statusbar = QtWidgets.QStatusBar(parent=MainWindow)
         self.statusbar.setObjectName("statusbar")
@@ -154,7 +151,6 @@ class Ui_MainWindow(QMainWindow):
         self.eventEncoderButton.setText(_translate("MainWindow", "Event Autoencoder"))
         self.interpretationButton.setText(_translate("MainWindow", "Interpretation"))
 
-
     def click_bind(self):
         self.predictorButton.clicked.connect(lambda: self.print_in_textBrowser("Click the train prediction button"))
         self.autoencodeButton.clicked.connect(lambda: self.print_in_textBrowser("Click the train autoencoder button"))
@@ -163,10 +159,12 @@ class Ui_MainWindow(QMainWindow):
         self.inputButton.clicked.connect(lambda: self.print_in_textBrowser("Click the select input button"))
         self.timeButton.clicked.connect(lambda: self.print_in_textBrowser("Click the select time button"))
         self.eventModelButton.clicked.connect(lambda: self.print_in_textBrowser("Click the select event model button"))
-        self.eventPredictorButton.clicked.connect(lambda: self.print_in_textBrowser("Click the select event predictor button"))
-        self.eventEncoderButton.clicked.connect(lambda: self.print_in_textBrowser("Click the select event encoder button"))
-        self.interpretationButton.clicked.connect(lambda: self.print_in_textBrowser("Click the select interpretation button"))
-
+        self.eventPredictorButton.clicked.connect(
+            lambda: self.print_in_textBrowser("Click the select event predictor button"))
+        self.eventEncoderButton.clicked.connect(
+            lambda: self.print_in_textBrowser("Click the select event encoder button"))
+        self.interpretationButton.clicked.connect(
+            lambda: self.print_in_textBrowser("Click the select interpretation button"))
 
         self.inputButton.clicked.connect(lambda: self.page_switch_clicked(0))
         self.outputButton.clicked.connect(lambda: self.page_switch_clicked(1))

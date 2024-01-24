@@ -10,6 +10,7 @@ if __name__ == '__main__':
     mainui = mainWindow.Ui_MainWindow(mainpage)
         # 显示窗口
     mainui.click_bind()
+    mainpage.setFixedSize(1000, 820)
     mainpage.show()    # 进入程序的主循环，并通过exit函数确保主循环安全结束(该释放资源的一定要释放)
     sys.exit(app.exec())
 
