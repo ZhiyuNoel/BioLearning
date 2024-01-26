@@ -13,8 +13,13 @@ from src.subpages import (Ui_inputpage, Ui_model, Ui_encoder,
 
 
 class Ui_MainWindow(QMainWindow):
+    subpages = {}
+    input_url = {}
+    pages = [Ui_inputpage, Ui_model, Ui_encoder, Ui_pred, Ui_time, Ui_eveModel,
+             Ui_evePre, Ui_eveEncoder, Ui_inter]
+    page_names = ["Ui_inputpage", "Ui_model", "Ui_encoder", "Ui_pred", "Ui_time", "Ui_eveModel",
+                  "Ui_evePre", "Ui_eveEncoder", "Ui_inter"]
 
-    mean_buttons = []
     def __init__(self, MainWindow):
         super().__init__()
         MainWindow.setObjectName("MainWindow")
@@ -105,13 +110,6 @@ class Ui_MainWindow(QMainWindow):
         self.subpage.setObjectName("stackedWidget")
         self.subpage.setSizePolicy(policy_subpage)
 
-        pages = [Ui_inputpage, Ui_model, Ui_encoder, Ui_pred, Ui_time, Ui_eveModel,
-                 Ui_evePre, Ui_eveEncoder, Ui_inter]
-        for page in pages:
-            self.insertpage = QtWidgets.QWidget()
-            Page_ui = page(self.insertpage)
-            Page_ui._signal.connect(self.print_in_textBrowser)
-            self.subpage.addWidget(self.insertpage)
         MainWindow.setCentralWidget(self.centralwidget)
         self.horizontalLayout_2.addWidget(self.subpage)
         self.verticalLayout_2.addLayout(self.horizontalLayout_2)
@@ -135,6 +133,7 @@ class Ui_MainWindow(QMainWindow):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
+        self.stack_fill()
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
         self.inputButton.setText(_translate("MainWindow", "Select Input"))
         self.modelButton.setText(_translate("MainWindow", "Select Model"))
@@ -160,8 +159,6 @@ class Ui_MainWindow(QMainWindow):
         self.interpretationButton.clicked.connect(
             lambda: self.print_in_textBrowser("Click the select interpretation button"))
 
-
-
         self.inputButton.clicked.connect(lambda: self.page_switch_clicked(0))
         self.modelButton.clicked.connect(lambda: self.page_switch_clicked(1))
         self.autoencodeButton.clicked.connect(lambda: self.page_switch_clicked(2))
@@ -171,6 +168,32 @@ class Ui_MainWindow(QMainWindow):
         self.eventPredictorButton.clicked.connect(lambda: self.page_switch_clicked(6))
         self.eventEncoderButton.clicked.connect(lambda: self.page_switch_clicked(7))
         self.interpretationButton.clicked.connect(lambda: self.page_switch_clicked(8))
+
+    def stack_fill(self):
+        # Check if the lists have the same length
+        if len(self.pages) != len(self.page_names):
+            raise ValueError("pages and page_names must be of the same length")
+
+        for page, page_name in zip(self.pages, self.page_names):
+            try:
+                insertpage = QtWidgets.QWidget()
+                Page_ui = page(insertpage)
+                Page_ui._signal.connect(self.print_in_textBrowser)
+                self.subpage.addWidget(insertpage)
+                self.subpages[page_name] = Page_ui
+            except Exception as e:
+                # Handle exceptions (log or take appropriate action)
+                print(f"Error loading page {page_name}: {e}")
+
+        self.additional_connect()
+
+
+    def additional_connect(self):
+        self.subpages["Ui_inputpage"]._signal_dict.connect(self.load_input_url)
+
+    def load_input_url(self, url_dic):
+        self.input_url = url_dic
+        print(self.input_url)
 
     def print_in_textBrowser(self, text):
         self.textBrowser.setText(text)

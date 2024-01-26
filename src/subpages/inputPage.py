@@ -16,8 +16,11 @@ from src import videoPlay
 '''
 The components and function implementations for the input page
 '''
+
+
 class Ui_inputpage(Pages):
     _signal = pyqtSignal(str)
+    _signal_dict = pyqtSignal(dict)
     text = ""
     num_file = None
     file_index = 0
@@ -104,12 +107,14 @@ class Ui_inputpage(Pages):
         self.label.setText(_translate("Form", " Select Label"))
         self.yaml.setText(_translate("Form", "Load Yaml"))
         self.sample.setText(_translate("Form", "Load Sample"))
-        self.clearInput.clicked.connect(lambda: self.send_data(self.text))
         self.sample.clicked.connect(lambda: self.load_samples())
         self.next.clicked.connect(lambda: self.next_click())
         self.previous.clicked.connect(lambda: self.previous_click())
         self.select.clicked.connect(lambda: self.send_data(self.text))
         self.label.clicked.connect(lambda: self.send_data(self.text))
+        self.clearInput.clicked.connect(lambda: self.send_data(self.text))
+        self.label.clicked.connect(lambda: self.send_url(self.input_dict))
+        self.clearInput.clicked.connect(lambda: self.send_url(self.input_dict))
 
     def set_video(self, fileurl, videopage):
         if fileurl == None:
@@ -168,7 +173,7 @@ class Ui_inputpage(Pages):
 
     def choose_yaml(self):
         yamlFile, _ = QFileDialog.getOpenFileName(self, "Select File", "",
-                                                         "YAML Files(*.yaml)")
+                                                  "YAML Files(*.yaml)")
         if yamlFile == "":
             print("Quit Choose")
             return
@@ -215,6 +220,9 @@ class Ui_inputpage(Pages):
     def send_data(self, str_data):
         self._signal.emit(str_data)
 
+    def send_url(self, url_dic):
+        self._signal_dict.emit(url_dic)
+
     @property
     def signal(self):
         return self._signal
@@ -236,3 +244,6 @@ class Ui_inputpage(Pages):
 
     def load_samples(self):
         return
+
+    def get_info(self):
+        return "hello world"

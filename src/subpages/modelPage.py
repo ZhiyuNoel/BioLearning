@@ -9,6 +9,15 @@
 from PyQt6 import QtCore, QtGui, QtWidgets
 from .Pages import Pages
 
+'''
+Description: Model Page provides main entrance to construct the neuron network architecture for model training
+The default architecture provides the default nn architecture for user to train with their own train set
+
+The load architecture requires user to select a cfg file including their own architecture, but also provide a graphical
+approach to built a cfg architecture file
+
+The load Model allows user to directly load a pytorch model for further training and directly testing
+'''
 class Ui_model(Pages):
     def __init__(self, Form):
         super().__init__()
@@ -20,9 +29,6 @@ class Ui_model(Pages):
         self.default = QtWidgets.QWidget()
         self.default.setObjectName("tab")
         self.tabWidget.addTab(self.default, "")
-        self.prebuilt = QtWidgets.QWidget()
-        self.prebuilt.setObjectName("tab_2")
-        self.tabWidget.addTab(self.prebuilt, "")
         self.custom = QtWidgets.QWidget()
         self.custom.setObjectName("tab_3")
         self.tabWidget.addTab(self.custom, "")
@@ -37,8 +43,9 @@ class Ui_model(Pages):
     def retranslateUi(self, Form):
         _translate = QtCore.QCoreApplication.translate
         Form.setWindowTitle(_translate("Form", "Form"))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.default), _translate("Form", "Default Model"))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.prebuilt), _translate("Form", "Prebuilt Model"))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.custom), _translate("Form", "Customize Model"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.default), _translate("Form", "Default Architecture"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.custom), _translate("Form", "Load Architecture"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.loadModel), _translate("Form", "Load Model"))
+
+
 
