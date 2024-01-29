@@ -8,7 +8,6 @@ tar_path = '../src'
 def transPyFile(filename):
     return os.path.splitext(filename)[0] + '.py'
 
-
 def checkRepeat(tar_filename):
     files = os.listdir(tar_path)
     for filename in files:

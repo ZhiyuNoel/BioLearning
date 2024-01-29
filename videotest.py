@@ -4,9 +4,6 @@ from PyQt6.QtCore import *
 from PyQt6.QtGui import *
 from PyQt6.QtWidgets import *
 import cv2
-
-
-
 class VideoWidget(QWidget):
     VIDEO_TYPE_OFFLINE = 0
     VIDEO_TYPE_REAL_TIME = 1
