@@ -12,7 +12,7 @@ class Model(nn.Module):
         self.Decode1 = nn.Linear(30, 100)
         self.Decode0 = nn.Linear(100, 625)
 
-        self.Predict0 = nn.Linear(3000, 20)
+        self.Predict0 = nn.Linear(30, 20)
         self.Predict1 = nn.Linear(20, 20)
         self.Predict2 = nn.Linear(20, 1)
 
@@ -25,14 +25,6 @@ class Model(nn.Module):
     def decode(self, x):    #Edit this method without changing the intup and output tensor dimentions.
         x = torch.sigmoid(self.Decode1(x))
         x = torch.tanh(self.Decode0(x))
-        #batch_size, _ = x.shape
-        #x = x.view(batch_size, 1, height, width)
-        #x = torch.tanh(self.DecodeConv4(x))
-        #x = torch.tanh(self.DecodeConv3(x))
-        #x = torch.tanh(self.DecodeConv2(x))
-        #x = torch.tanh(self.DecodeConv1(x))
-        #x = torch.tanh(self.DecodeConv0(x))
-        #x = x.view(batch_size, width * height)
         return x
 
     def Reshape_for_convolutional_layer(x, height, width):
@@ -58,10 +50,10 @@ class Model(nn.Module):
         return x
 
     # 它首先对输入x的每个元素进行编码，然后将编码后的结果连续串联起来，最后通过预测器进行预测。
-    def full_model(self, x, width, height):
+    def full_model(self, x):
         y = torch.empty(0)
         for i in range(100):
-            y = torch.cat((y, (self.encode((x[i]).view(1, 625), width, height)).view(30)), dim=0)
+            y = torch.cat((y, (self.encode((x[i]).view(1, 625))).view(30)), dim=0)
         y = torch.flatten(y)
         x = self.predictor_train(y)
         return x
