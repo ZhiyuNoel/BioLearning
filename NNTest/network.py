@@ -57,3 +57,6 @@ class Model(nn.Module):
         y = torch.flatten(y)
         x = self.predictor_train(y)
         return x
+
+
+
