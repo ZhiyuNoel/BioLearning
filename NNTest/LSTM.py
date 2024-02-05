@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-from torch import device
 from torch.nn import functional as F
 
 '''
@@ -26,11 +25,36 @@ class LSTMEncoder(nn.Module):
         return output, (hn, cn)
 
 
+import torch.nn as nn
+
+
 class LSTMDecoder(nn.Module):
-    def __init__(self, input_size=625, hidden_size=128, num_layers=1):
+    def __init__(self, seq_len=5, hidden_size=128, output_size=625, num_layers=1):
         super(LSTMDecoder, self).__init__()
-        self.lstm = nn.LSTM(input_size=hidden_size, hidden_size=input_size, num_layers=num_layers,
-                            batch_first=True)
+        self.seq_len = seq_len
+        self.hidden_size = hidden_size
+        # 扩展hn成序列所需的全连接层
+        self.fc_expand = nn.Linear(self.hidden_size, self.hidden_size * self.seq_len)
+        # 修改后的LSTM层
+        self.lstm = nn.LSTM(input_size=hidden_size, hidden_size=output_size, num_layers=num_layers, batch_first=True)
+
+        # 为了重构原始形状，可能需要转置卷积层或其他结构
+        # self.conv_transpose = ...
+
+    def forward_hn(self, hn):
+        # hn形状：[num_layers * num_directions, batch_size, hidden_size]
+        # 选择最后一层的hn
+        hn = hn[-1]  # 形状：[batch_size, hidden_size]
+        # 扩展hn成序列
+        hn_seq = self.fc_expand(hn)  # 形状：[batch_size, hidden_size * seq_len]
+        hn_seq = hn_seq.view(-1, self.seq_len, self.hidden_size)  # 形状：[batch_size, seq_len, hidden_size]
+        # LSTM层
+        output, _ = self.lstm(hn_seq)  # 输出形状：[batch_size, seq_len, output_size]
+        # 根据需要调整输出形状以匹配原始输入形状
+        batch_size, seq_len, _ = output.size()
+        output = output.view(batch_size, seq_len, 1, 25, 25)
+        # 最终输出形状应为[batch_size, seq_len, channels, height, width]
+        return output
 
     def forward(self, x):
         # x形状：[batch, seq_len, hidden_size]
@@ -42,10 +66,10 @@ class LSTMDecoder(nn.Module):
 
 
 class LSTMAutoencoder(nn.Module):
-    def __init__(self, input_size=625, hidden_size=128, num_layers=1):
+    def __init__(self):
         super(LSTMAutoencoder, self).__init__()
-        self.encoder = LSTMEncoder(input_size, hidden_size, num_layers)
-        self.decoder = LSTMDecoder(input_size, hidden_size, num_layers)
+        self.encoder = LSTMEncoder()
+        self.decoder = LSTMDecoder()
 
     def forward(self, x):
         # 编码
@@ -53,7 +77,7 @@ class LSTMAutoencoder(nn.Module):
         # 解码
         # 由于解码器的输入是解码器的隐藏状态，我们需要将hn作为解码器的初始输入
         # 在实际应用中，可能需要调整维度或使用额外的全连接层来适配解码器的输入要求
-        decoded = self.decoder(output)
+        decoded = self.decoder.forward(output)
         return decoded
 
 
@@ -172,15 +196,48 @@ class LinearAutoencoder(nn.Module):
 
     def forward(self, x):  # x: bs,input_size
         batch, seq_len, channel, width, height = x.size()
-        c_out = x.view(batch * seq_len, channel*height*width)  #
+        c_out = x.view(batch * seq_len, channel * height * width)  #
         feat = self.encoder(c_out)  # feat: bs,latent_size
         re_x = self.decoder(feat)  # re_x: bs, output_size
         out_x = re_x.view(batch, seq_len, channel, width, height)
         return out_x
 
+
 '''
-====================================================================================================================================
-Tested
+========================================================================================================================
+Predictor
+'''
+
+
+class Predictor(nn.Module):
+    num_class = 1
+    hidden_size1 = 64
+    hidden_size2 = 32
+
+    def __init__(self, feature_size=128, seq_len=10, num_class=1):
+        super(Predictor, self).__init__()
+        self.seq_len = seq_len
+        self.num_class = num_class
+
+        self.LSTM_classifier = nn.LSTM(feature_size, self.hidden_size1, 1, batch_first=True)  ## 用lstm layer 处理序列，输出为64
+        self.fc_1 = nn.Linear(self.hidden_size1, self.hidden_size2)  ## 用全链接层分类 full connection layer 1
+        self.fc_2 = nn.Linear(self.hidden_size2, self.num_class)  ## full connection layer 2
+
+    def forward(self, x):  ## input [batch_size, seq_len, 128]
+        batch_size, seq_len, features = x.size()
+        out, _ = self.LSTM_classifier(x)  ## out = [batch_size, seq_len, 64]
+        out = out.contiguous().view(-1, self.hidden_size1)  ## out = [batch_size * seq_len, 64]
+        out = self.fc_1(out)  # 中间层激活 out = [batch_size * seq_len, 32]
+        out = self.fc_2(out)  ## out = [batch_size * seq_len, 1]
+        out = out.view(batch_size, seq_len, -1) ## [10, 5, 1]
+        out = torch.sigmoid(out)
+
+        return out.squeeze(-1)
+
+
+'''
+========================================================================================================================
+Tested, The second linear autoencoder
 '''
 
 
@@ -190,7 +247,7 @@ class LinearEncoder2(nn.Module):
         # Encoding Layers
         self.Encode0 = nn.Linear(625, 100)
         self.Encode1 = nn.Linear(100, 30)
-        self.Bottleneck = nn.LayerNorm(30)    #Edit these layer definitions except for the Bottleneck.
+        self.Bottleneck = nn.LayerNorm(30)  # Edit these layer definitions except for the Bottleneck.
 
     def forward(self, x):  # x: bs,input_size
         x = torch.tanh(self.Encode0(x))
@@ -220,7 +277,7 @@ class LinearAutoencoder2(nn.Module):
 
     def forward(self, x):  # x: bs,input_size
         batch, seq_len, channel, width, height = x.size()
-        c_out = x.view(batch * seq_len, channel*height*width)  #
+        c_out = x.view(batch * seq_len, channel * height * width)  #
         feat = self.encoder(c_out)  # feat: bs,latent_size
         re_x = self.decoder(feat)  # re_x: bs, output_size
         out_x = re_x.view(batch, seq_len, channel, width, height)

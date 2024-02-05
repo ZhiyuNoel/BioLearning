@@ -12,7 +12,7 @@ class Model(nn.Module):
         self.Decode1 = nn.Linear(30, 100)
         self.Decode0 = nn.Linear(100, 625)
 
-        self.Predict0 = nn.Linear(30, 20)
+        self.Predict0 = nn.Linear(3000, 20)
         self.Predict1 = nn.Linear(20, 20)
         self.Predict2 = nn.Linear(20, 1)
 
