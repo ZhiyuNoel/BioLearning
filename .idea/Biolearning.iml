@@ -4,6 +4,7 @@
     <content url="file://$MODULE_DIR$">
       <excludeFolder url="file://$MODULE_DIR$/File_backup" />
       <excludeFolder url="file://$MODULE_DIR$/InputVideo" />
+      <excludeFolder url="file://$MODULE_DIR$/src/model/.ipynb_checkpoints" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
