@@ -44,8 +44,6 @@ def precision_cal(predictor, dataloader, device):
     predictor.eval()  # 将模型设置为评估模式
     criterion = nn.BCELoss()
     sample_total = 0
-
-    total_output = []
     threshold = 1.0e-01
     with torch.no_grad():  # 在评估过程中不计算梯度
         test_loss = 0
@@ -54,9 +52,9 @@ def precision_cal(predictor, dataloader, device):
         FP = 0
         FN = 0
 
-        for testImgs, testLabel in dataloader:  # 假设test_loader是您的测试数据加载器
-            testImgs, testLabel = testImgs.to(device), testLabel.to(device)
-            outputs = predictor(testImgs)
+        for testFrames, testLabel in dataloader:  # 假设test_loader是您的测试数据加载器
+            testFrames, testLabel = testFrames.to(device), testLabel.to(device)
+            outputs = predictor(testFrames)
             test_loss += criterion(outputs, testLabel.float()).item()
 
             # 使用张量操作计算TP, FP, TN, FN
@@ -72,7 +70,7 @@ def precision_cal(predictor, dataloader, device):
     recall = TP / (TP + FN) if (TP + FN) > 0 else 0
     avg_test_loss = test_loss / len(dataloader)  # 计算平均损失
 
-    return (avg_accuracy, precision, recall), avg_test_loss, total_output
+    return (avg_accuracy, precision, recall), avg_test_loss
 
 
 def model_train(model: nn.Module, device, dataloader, criterion, EPOCHS: int, optimizer, autoencode=False):
@@ -96,3 +94,16 @@ def model_train(model: nn.Module, device, dataloader, criterion, EPOCHS: int, op
             processBar.set_description(f"[{epoch}/{EPOCHS}] Loss: {loss.item():.10f}")
         loss_value.append(loss.item())
     return model, loss_value
+
+
+def result_post_processing(predictor:nn.Module, dataloader, device):
+    predictor.eval()
+    threshold = 1.0e-01
+    prob_results = []
+    with torch.no_grad():  # 在评估过程中不计算梯度
+        for testFrames, testLabels in dataloader:  # 假设test_loader是您的测试数据加载器
+            testFrames, testLabels = testFrames.to(device=device), testLabels.to(device=device)
+            outputs = predictor(testFrames)
+            prob_results.append((outputs >= threshold).int())
+
+    return prob_results

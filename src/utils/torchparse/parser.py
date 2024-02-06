@@ -14,7 +14,7 @@ def get_implem_layers():
     """
     ret = {}
     names = [m[0] for m in inspect.getmembers(layers, inspect.isclass) \
-            if m[1].__module__ == layers.__name__]
+             if m[1].__module__ == layers.__name__]
     for n in names:
         l = getattr(layers, n)
         if hasattr(l, 'layer'):

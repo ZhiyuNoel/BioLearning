@@ -8,7 +8,7 @@ import torch
 from torch import nn, optim
 from torch.utils.data import DataLoader
 
-from utils import DataLoad, DataFileLoad, VideoFrameDataset, increment_path
+from src.utils import DataLoad, DataFileLoad, VideoFrameDataset, increment_path
 from LSTM import LSTMEncoder, LSTMAutoencoder, Predictor
 from common import precision_cal, select_device, model_train
 
@@ -18,6 +18,14 @@ if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))  # add ROOT to PATH
 ROOT = Path(os.path.relpath(ROOT, Path.cwd()))  # relative
 
+
+def model_loader(weight, device): ## 待定
+    Encoder = LSTMEncoder()
+    predictor = Predictor(extractor=Encoder, device=device).to(device)  # 假设在没有GPU的环境中加载
+    # 加载保存的状态字典
+    state_dict = torch.load(weight, map_location=device)
+    predictor.load_state_dict(state_dict)
+    return predictor
 
 
 def autoencoder_test(model: nn.Module, device, dataloader, criterion):
@@ -72,20 +80,22 @@ def run(train_video_path, train_label_path,
     ## Model Load
     learning_rate = 0.0001
     EPOCHS = 10
-    if autoencode and train:
-        if weight:
-            Autoencoder = torch.load(weight).to(device=device)
+    if autoencode:
+        if weight is not None:
+            Autoencoder = torch.load(weight).to(device)
         else:
             Autoencoder = LSTMAutoencoder(device)
-        criterion = nn.MSELoss()
-        optimizer = optim.Adam(Autoencoder.parameters(), lr=learning_rate)
-        Autoencoder.train()
-        print(f"Load model to device: {device}, Start Autoencoder training ............")
-        Autoencoder, losses = model_train(model=Autoencoder, device=device, dataloader=train_loader,
-                                          criterion=criterion, optimizer=optimizer, EPOCHS=EPOCHS,
-                                          autoencode=True)
-        avg_train_loss = np.mean(losses)
-        print(f"Autoencoder training finished: Average training loss: {avg_train_loss}", end="   ")
+
+        if train:
+            criterion = nn.MSELoss()
+            optimizer = optim.Adam(Autoencoder.parameters(), lr=learning_rate)
+            Autoencoder.train()
+            print(f"Load model to device: {device}, Start Autoencoder training ............")
+            Autoencoder, losses = model_train(model=Autoencoder, device=device, dataloader=train_loader,
+                                              criterion=criterion, optimizer=optimizer, EPOCHS=EPOCHS,
+                                              autoencode=True)
+            avg_train_loss = np.mean(losses)
+            print(f"Autoencoder training finished: Average training loss: {avg_train_loss}", end="   ")
         if test:
             test_loss = autoencoder_test(Autoencoder, device, dataloader=test_loader, criterion=criterion)
             print(f"Test loss: {test_loss}", end="   ")
@@ -98,25 +108,29 @@ def run(train_video_path, train_label_path,
             print(f"The trained model is saved in: {AE_save_dir}/autoencoder.pt", end="")
         print("\n")
 
-    if predict and train:
-        Encoder = LSTMEncoder()
-        predictor = Predictor(extractor=Encoder, device=device).to(device=device)
-        criterion = nn.BCELoss()
-        optimizer = optim.Adam(predictor.parameters(), lr=learning_rate)
-        print(f"Load model to device: {device}, Start Predictor training ............")
-        predictor, train_loss = model_train(model=predictor, device=device, dataloader=train_loader,
-                                            criterion=criterion, optimizer=optimizer, EPOCHS=EPOCHS)
-        print(f"Autoencoder training finished: Average training loss: {np.mean(train_loss)}", end="   ")
+    if predict:
+        if weight is not None:
+            predictor = torch.load(weight).to(device)
+        else:
+            Encoder = LSTMEncoder()
+            predictor = Predictor(extractor=Encoder, device=device).to(device=device)
 
+        if train:
+            criterion = nn.BCELoss()
+            optimizer = optim.Adam(predictor.parameters(), lr=learning_rate)
+            print(f"Load model to device: {device}, Start Predictor training ............")
+            predictor, train_loss = model_train(model=predictor, device=device, dataloader=train_loader,
+                                                criterion=criterion, optimizer=optimizer, EPOCHS=EPOCHS)
+            print(f"Autoencoder training finished: Average training loss: {np.mean(train_loss)}", end="   ")
         if test:
-            score, test_loss, _ = precision_cal(predictor, test_loader, device)
+            score, test_loss = precision_cal(predictor, test_loader, device)
             print(f"scores for test = {score}; Average test loss = {test_loss}", end="   ")
         if save:
             Pre_proj = ROOT / "runs/predict"
             Pre_save_dir = increment_path(Path(Pre_proj) / name, exist_ok=False)  # increment run
             Pre_save_dir.mkdir(parents=True, exist_ok=True)  # make dir
             torch.save(predictor, Pre_save_dir / "predictor.pt")
-            print(f"The trained model is saved in: {Pre_save_dir}/predictor.pt", end="")
+            print(f"The trained model state dictionary is saved in: {Pre_save_dir}/predictor.pt", end="")
         print("\n")
 
     return
@@ -126,14 +140,14 @@ def parse_opt():
     parser = argparse.ArgumentParser()
     parser.add_argument("--test_video_path", "-tv", type=str, default="", help="The path for test video dir")
     parser.add_argument("--test_label_path", "-tl", type=str, default="", help="The path for test label dir")
-    parser.add_argument("--weight", type=str, default="", help="model path(s)")
+    parser.add_argument("--weight", default=None, help="model path(s)")
     parser.add_argument("--window_size", "-w", type=int, default=100, help="The window size for video sampling")
     parser.add_argument("--batch_size", "-bz", type=int, default=10, help="The size for data in one batch")
     parser.add_argument("--win_stride", "-stride", type=int, default=2,
                         help="The step length of sliding window for video sampling")
     parser.add_argument("--imgz", "--img", "--img-size", nargs="+", type=int, default=[25],
                         help="inference size h,w")
-    parser.add_argument("--device", default="mps", help="cuda device, i.e. 0 or 0,1,2,3 or cpu")
+    parser.add_argument("--device", type=str, default="mps", help="cuda device, i.e. 0 or 0,1,2,3 or cpu")
     parser.add_argument("--autoencode", action="store_true", help="Apply the autoencoder")
     parser.add_argument("--predict", action="store_false", help="Apply the predictor")
     parser.add_argument("--train", action="store_false", help="Use dataset for training model")
@@ -155,8 +169,10 @@ def main(opt):
 
 if __name__ == "__main__":
     opt = parse_opt()
-    opt.save = True
+    opt.save = False
     opt.autoencode = False
     opt.predict = True
     opt.test = True
+    opt.train = False
+    opt.weight="runs/predict/exp3/predictor.pt"
     main(opt)

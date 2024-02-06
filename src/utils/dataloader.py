@@ -18,13 +18,10 @@ class VideoFrameDataset(Dataset):
 
     def _generate_samples(self):
         samples = []
-        for filename, frames in self.video_frames_dict.items():
+        for labelName, (filename, frames) in zip(self.labels_dict, self.video_frames_dict.items()):
             num_frames = len(frames)
             for start in range(0, (num_frames - self.window_size + 1), self.stride):
                 end = start + self.window_size
-                base_filename = os.path.splitext(os.path.basename(filename))[0]
-                # 构建新的文件路径
-                labelName = os.path.join('../InputVideo/Train_Label', base_filename + '.txt')
                 samples.append((labelName, filename, start, end))
         return samples
 
@@ -32,10 +29,9 @@ class VideoFrameDataset(Dataset):
         return len(self.samples)
 
     def __getitem__(self, idx):
-        labelname, filename, start, end = self.samples[idx]
-
-        frames = self.video_frames_dict[filename][start:end, :, :]  # [window_size, 1, 25, 25]
-        labels = self.labels_dict[labelname][start:end]  # [sequence_length, num_classes]
+        labelName, fileName, start, end = self.samples[idx]
+        frames = self.video_frames_dict[fileName][start:end, :, :]  # [window_size, 1, 25, 25]
+        labels = self.labels_dict[labelName][start:end]  # [sequence_length, num_classes]
         return frames, labels
 
 
