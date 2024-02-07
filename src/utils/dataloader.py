@@ -9,7 +9,7 @@ from torch.utils.data import Dataset
 
 
 class VideoFrameDataset(Dataset):
-    def __init__(self, video_frames_dict, labels_dict, window_size, stride):
+    def __init__(self, video_frames_dict, labels_dict, window_size=100, stride=2):
         self.stride = stride
         self.video_frames_dict = video_frames_dict
         self.labels_dict = labels_dict
@@ -20,8 +20,10 @@ class VideoFrameDataset(Dataset):
         samples = []
         for labelName, (filename, frames) in zip(self.labels_dict, self.video_frames_dict.items()):
             num_frames = len(frames)
-            for start in range(0, (num_frames - self.window_size + 1), self.stride):
-                end = start + self.window_size
+            window_size = self.window_size if self.window_size else num_frames
+            stride = self.stride if self.stride else 1
+            for start in range(0, (num_frames - window_size + 1), stride):
+                end = start + window_size
                 samples.append((labelName, filename, start, end))
         return samples
 

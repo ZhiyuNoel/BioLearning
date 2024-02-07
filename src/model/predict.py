@@ -10,22 +10,13 @@ from torch.utils.data import DataLoader
 
 from src.utils import DataLoad, DataFileLoad, VideoFrameDataset, increment_path
 from LSTM import LSTMEncoder, LSTMAutoencoder, Predictor
-from common import precision_cal, select_device, model_train
+from common import precision_cal, select_device, model_train, model_loader, result_post_processing
 
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[1]  # YOLOv5 root directory
 if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))  # add ROOT to PATH
 ROOT = Path(os.path.relpath(ROOT, Path.cwd()))  # relative
-
-
-def model_loader(weight, device): ## 待定
-    Encoder = LSTMEncoder()
-    predictor = Predictor(extractor=Encoder, device=device).to(device)  # 假设在没有GPU的环境中加载
-    # 加载保存的状态字典
-    state_dict = torch.load(weight, map_location=device)
-    predictor.load_state_dict(state_dict)
-    return predictor
 
 
 def autoencoder_test(model: nn.Module, device, dataloader, criterion):
@@ -72,8 +63,10 @@ def run(train_video_path, train_label_path,
     train_set = VideoFrameDataset(train_video, train_label, window_size, stride=win_stride)
     train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
 
-    test_set = VideoFrameDataset(test_video, test_label, window_size, stride=win_stride)
-    test_loader = DataLoader(test_set, batch_size=batch_size)
+    test_set = VideoFrameDataset(test_video, test_label, window_size=None, stride=None)
+    test_loader = DataLoader(test_set, batch_size=1)
+
+    # print(next(iter(test_loader))[0].shape)
 
     ## Set device selection
     device = select_device(device)
@@ -82,7 +75,7 @@ def run(train_video_path, train_label_path,
     EPOCHS = 10
     if autoencode:
         if weight is not None:
-            Autoencoder = torch.load(weight).to(device)
+            Autoencoder = model_loader(weight, device)
         else:
             Autoencoder = LSTMAutoencoder(device)
 
@@ -110,7 +103,7 @@ def run(train_video_path, train_label_path,
 
     if predict:
         if weight is not None:
-            predictor = torch.load(weight).to(device)
+            predictor = model_loader(weight, device=device)
         else:
             Encoder = LSTMEncoder()
             predictor = Predictor(extractor=Encoder, device=device).to(device=device)
@@ -125,6 +118,8 @@ def run(train_video_path, train_label_path,
         if test:
             score, test_loss = precision_cal(predictor, test_loader, device)
             print(f"scores for test = {score}; Average test loss = {test_loss}", end="   ")
+            # get the predicted index for results:
+            # post_result = result_post_processing(predictor=predictor, dataloader=test_loader, device=device)
         if save:
             Pre_proj = ROOT / "runs/predict"
             Pre_save_dir = increment_path(Path(Pre_proj) / name, exist_ok=False)  # increment run
@@ -174,5 +169,5 @@ if __name__ == "__main__":
     opt.predict = True
     opt.test = True
     opt.train = False
-    opt.weight="runs/predict/exp3/predictor.pt"
+    opt.weight = "runs/predict/exp3/predictor.pt"
     main(opt)

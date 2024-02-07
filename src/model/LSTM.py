@@ -215,11 +215,10 @@ class Predictor(nn.Module):
     hidden_size1 = 64
     hidden_size2 = 32
 
-    def __init__(self, extractor, device, feature_size=128, seq_len=10, num_class=1):
+    def __init__(self, extractor, device, feature_size=128, num_class=1):
         super(Predictor, self).__init__()
         self.device = device
         self.extractor = extractor.to(device=self.device)
-        self.seq_len = seq_len
         self.num_class = num_class
 
         self.LSTM_classifier = nn.LSTM(feature_size, self.hidden_size1, 1, batch_first=True)  ## 用lstm layer 处理序列，输出为64

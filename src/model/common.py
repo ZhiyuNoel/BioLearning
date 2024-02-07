@@ -1,5 +1,6 @@
 import os
 
+import numpy as np
 import torch
 import platform
 from torch import nn
@@ -104,6 +105,11 @@ def result_post_processing(predictor:nn.Module, dataloader, device):
         for testFrames, testLabels in dataloader:  # 假设test_loader是您的测试数据加载器
             testFrames, testLabels = testFrames.to(device=device), testLabels.to(device=device)
             outputs = predictor(testFrames)
-            prob_results.append((outputs >= threshold).int())
-
+            results = (outputs >= threshold).int().cpu().numpy().flatten()
+            prob_results.append(np.where(results == 1)[0])
     return prob_results
+
+
+def model_loader(weight, device): ## 待定
+    model = torch.load(weight).to(device)
+    return model
