@@ -44,13 +44,14 @@ def run(train_video_path, train_label_path,
         win_stride=2,  ## The length of step for sampling
         imgz=(25, 25),  ## resize image
         device="",  ## cuda device if have
+        name='exp',  ## The save path for experiment
         autoencode=False,  ## Apply autoencoder
         predict=True,  ## Apply predictor
         train=True,  ## Apply model for train
         test=False,  ## Apple model for test
-        save=True,  ## Save model or not
-        name='exp'  ## The save path for experiment
-        ):
+        save=True  ## Save model or not
+    ):
+
     ## load file names (relative path)
     file_paths = DataFileLoad(train_video=train_video_path, train_label=train_label_path, test_video=test_video_path,
                               test_label=test_label_path)
