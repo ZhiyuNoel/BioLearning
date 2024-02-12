@@ -7,6 +7,7 @@
 
 
 from PyQt6 import QtCore, QtWidgets
+from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import QMainWindow
 from src.subpages import (Ui_inputpage, Ui_model, Ui_encoder,
                           Ui_pred, Ui_time, Ui_eveModel, Ui_evePre, Ui_eveEncoder, Ui_inter)
@@ -14,15 +15,15 @@ from src.subpages import (Ui_inputpage, Ui_model, Ui_encoder,
 
 class Ui_MainWindow(QMainWindow):
     subpages = {}
-    input_url = {}
+    input_url = []
     pages = [Ui_inputpage, Ui_model, Ui_encoder, Ui_pred, Ui_time, Ui_eveModel,
              Ui_evePre, Ui_eveEncoder, Ui_inter]
     page_names = ["Ui_inputpage", "Ui_model", "Ui_encoder", "Ui_pred", "Ui_time", "Ui_eveModel",
                   "Ui_evePre", "Ui_eveEncoder", "Ui_inter"]
+    _signal_url = pyqtSignal(list)
 
     def __init__(self, MainWindow):
         super().__init__()
-        MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1000, 800)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Minimum)
         sizePolicy.setHorizontalStretch(0)
@@ -148,6 +149,7 @@ class Ui_MainWindow(QMainWindow):
     def click_bind(self):
         self.predictorButton.clicked.connect(lambda: self.print_in_textBrowser("Click the train prediction button"))
         self.autoencodeButton.clicked.connect(lambda: self.print_in_textBrowser("Click the train autoencoder button"))
+        self.autoencodeButton.clicked.connect(lambda: self.send_url())
         self.modelButton.clicked.connect(lambda: self.print_in_textBrowser("Click the select model button"))
         self.inputButton.clicked.connect(lambda: self.print_in_textBrowser("Click the select input button"))
         self.timeButton.clicked.connect(lambda: self.print_in_textBrowser("Click the select time button"))
@@ -190,9 +192,14 @@ class Ui_MainWindow(QMainWindow):
 
     def additional_connect(self):
         self.subpages["Ui_inputpage"]._signal_list.connect(self.load_input_url)
+        self._signal_url.connect(self.subpages["Ui_encoder"].receive_url)
+
+    def send_url(self):
+        self._signal_url.emit(self.input_url)
 
     def load_input_url(self, url_dic):
         self.input_url = url_dic
+
 
     def print_in_textBrowser(self, text):
         self.textBrowser.setText(text)

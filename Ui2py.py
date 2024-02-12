@@ -2,8 +2,8 @@ import os
 import os.path
 import sys
 
-dir_path = '../UI_files'
-tar_path = '../src'
+dir_path = 'UI_files'
+tar_path = 'src'
 
 def transPyFile(filename):
     return os.path.splitext(filename)[0] + '.py'

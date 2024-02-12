@@ -33,7 +33,7 @@ class Ui_inputpage(Pages):
         super().__init__()
         Form.setObjectName("Form")
         self.outerLayout = QtWidgets.QWidget(parent=Form)
-        self.outerLayout.setGeometry(QtCore.QRect(0, 0, 800, 531))
+        self.outerLayout.setGeometry(QtCore.QRect(0, 0, 820, 531))
         self.outerLayout.setObjectName("horizontalLayoutWidget")
 
         self.horizontalLayout = QtWidgets.QHBoxLayout(self.outerLayout)

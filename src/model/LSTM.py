@@ -208,8 +208,6 @@ class LinearAutoencoder(nn.Module):
 ========================================================================================================================
 Predictor
 '''
-
-
 class Predictor(nn.Module):
     num_class = 1
     hidden_size1 = 64
