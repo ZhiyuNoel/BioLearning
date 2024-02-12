@@ -72,7 +72,6 @@ class VideoWidget(QWidget):
     def set_video(self, url, video_type=VIDEO_TYPE_OFFLINE, auto_play=False):
         self.reset()
         self.video_url = url
-        print(self.video_url)
         self.video_type = video_type
         self.auto_play = auto_play
         self.set_timer_fps()

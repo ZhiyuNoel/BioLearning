@@ -189,11 +189,10 @@ class Ui_MainWindow(QMainWindow):
 
 
     def additional_connect(self):
-        self.subpages["Ui_inputpage"]._signal_dict.connect(self.load_input_url)
+        self.subpages["Ui_inputpage"]._signal_list.connect(self.load_input_url)
 
     def load_input_url(self, url_dic):
         self.input_url = url_dic
-        print(self.input_url)
 
     def print_in_textBrowser(self, text):
         self.textBrowser.setText(text)
