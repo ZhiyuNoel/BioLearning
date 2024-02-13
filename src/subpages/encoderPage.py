@@ -243,9 +243,17 @@ class Ui_encoder(Pages):
         self.wsSpin.setValue(100)
         self.bsSpin.setValue(10)
 
+    def send_data(self, str_data):
+        self._signal.emit(str_data)
+
     def autoencoder_train_pipeline(self):
-        kargs = {"train_video_path": self.input_url[0], "train_label_path": self.input_url[1],
-                "test_video_path": "", "test_label_path": "", "weight": None, "window_size": self.window_size,
-                "batch_size": self.batch_size, "win_stride": 2, "imgz": (25, 25), "device": " mps", "name": 'exp',
-                "autoencode": True, "predict": False, "train": True, "test": False, "save": False}
-        run(**kargs)
+        if len(self.input_url) == 0 or (len(self.input_url) != 0 and len(self.input_url[0]) != len(self.input_url[1])):
+            self.send_data("Invalid Input! Please Input Again")
+        else:
+            kargs = {"train_video_path": self.input_url[0], "train_label_path": self.input_url[1],
+                    "test_video_path": "", "test_label_path": "", "weight": None, "window_size": self.window_size,
+                    "batch_size": self.batch_size, "win_stride": 2, "imgz": (25, 25), "device": " mps", "name": 'exp',
+                    "autoencode": True, "predict": False, "train": True, "test": False, "save": False}
+            run(**kargs)
+
+

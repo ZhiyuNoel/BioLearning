@@ -1,4 +1,5 @@
 import time
+
 from PyQt6.QtCore import *
 from PyQt6.QtGui import *
 from PyQt6.QtWidgets import *
@@ -44,7 +45,7 @@ class VideoWidget(QWidget):
         layout.addLayout(control_box)
 
         self.setLayout(layout)
-
+        self.center()
         # timer 定时器
         self.timer = VideoTimer()
         self.timer.timeSignal.signal[str].connect(self.show_video_images)
@@ -154,6 +155,17 @@ class VideoWidget(QWidget):
                        VideoWidget.STATU_PAUSE,
                        VideoWidget.STATUS_PLAYING)[self.status]
 
+    def center(self):
+        # Get the geometry of the main window
+        qr = self.frameGeometry()
+        # Get the primary screen of the application
+        primaryScreen = QApplication.primaryScreen()
+        # Get the center point of the screen
+        cp = primaryScreen.availableGeometry().center()
+        # Move the rectangle's center point to the screen's center point
+        qr.moveCenter(cp)
+
+        self.move(qr.topLeft())
 
 class Communicate(QObject):
     signal = pyqtSignal(str)

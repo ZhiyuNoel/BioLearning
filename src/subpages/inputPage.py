@@ -19,7 +19,6 @@ The components and function implementations for the input page
 
 
 class Ui_inputpage(Pages):
-    _signal = pyqtSignal(str)
     _signal_list = pyqtSignal(list)
     text = ""
     num_file = None
@@ -28,11 +27,10 @@ class Ui_inputpage(Pages):
     input_dict = {}
     input_trans = []
 
-
-    def __init__(self, Form):
+    def __init__(self, inputPage):
         super().__init__()
-        Form.setObjectName("Form")
-        self.outerLayout = QtWidgets.QWidget(parent=Form)
+        inputPage.setObjectName("Form")
+        self.outerLayout = QtWidgets.QWidget(parent=inputPage)
         self.outerLayout.setGeometry(QtCore.QRect(0, 0, 820, 531))
         self.outerLayout.setObjectName("horizontalLayoutWidget")
 
@@ -94,8 +92,8 @@ class Ui_inputpage(Pages):
         self.verticalLayout_2.addWidget(self.clearInput)
 
         self.horizontalLayout.addLayout(self.verticalLayout_2)
-        self.retranslateUi(Form)
-        QtCore.QMetaObject.connectSlotsByName(Form)
+        self.retranslateUi(inputPage)
+        QtCore.QMetaObject.connectSlotsByName(inputPage)
 
     def retranslateUi(self, Form):
         _translate = QtCore.QCoreApplication.translate
@@ -164,16 +162,27 @@ class Ui_inputpage(Pages):
     def choose_label(self):
         directory_path = QFileDialog.getExistingDirectory(self, "Select Directory", "./")
         self.input_trans.append(directory_path)
-        fileName = [directory_path + '/' + f for f in sorted(os.listdir(directory_path)) if f.endswith('.txt')]
-        if len(fileName) == 0 or len(fileName) != self.num_file:
-            self.text = "Invalid Input, Please Input Again!"
-            return
+        if directory_path:  # Check if the directory_path is not empty
+            try:
+                fileName = [directory_path + '/' + f for f in sorted(os.listdir(directory_path)) if
+                            f.endswith('.txt')]
+                if len(fileName) == 0 or len(fileName) != self.num_file:
+                    self.text = "Invalid Input, Please Input Again!"
+                    return
 
-        self.text = "Successfully Upload Label, The Video-Label Pair recorded as : \n"
-        file_keys = list(self.input_dict.keys())
-        for label_file, video_file in zip(fileName, file_keys):
-            self.input_dict[video_file] = label_file
-            self.text += ("Video: " + video_file.split("/")[-1] + "  Label: " + label_file.split("/")[-1] + "\n")
+                self.text = "Successfully Upload Label, The Video-Label Pair recorded as : \n"
+                file_keys = list(self.input_dict.keys())
+                for label_file, video_file in zip(fileName, file_keys):
+                    self.input_dict[video_file] = label_file
+                    self.text += ("Video: " + video_file.split("/")[-1] +
+                                  "  Label: " + label_file.split("/")[-1] + "\n")
+                # Continue with processing file_names
+            except FileNotFoundError:
+                print(f"The directory {directory_path} was not found.")
+        else:
+            print("Directory path is not set.")
+
+
 
     def choose_yaml(self):
         yamlFile, _ = QFileDialog.getOpenFileName(self, "Select File", "",
