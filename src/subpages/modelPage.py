@@ -89,6 +89,12 @@ class Ui_model(Pages):
         self.encoderClear.setLayoutDirection(QtCore.Qt.LayoutDirection.LeftToRight)
         self.encoderClear.setObjectName("encoderClear")
         self.encodeButtonLayout.addWidget(self.encoderClear)
+
+        self.enConfirm = QtWidgets.QPushButton(parent=self.DefaultWidget)
+        self.enConfirm.setMaximumSize(QtCore.QSize(16777215, 16777215))
+        self.enConfirm.setLayoutDirection(QtCore.Qt.LayoutDirection.LeftToRight)
+        self.enConfirm.setObjectName("enConfirm")
+        self.encodeButtonLayout.addWidget(self.enConfirm)
         self.EncoderLayout.addLayout(self.encodeButtonLayout)
         self.addOneLayer(self.enLayerLayout, self.encoderAdd)
 
@@ -145,6 +151,12 @@ class Ui_model(Pages):
         self.predictorClear.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.predictorClear.setObjectName("predictorClear")
         self.preButtonLayout.addWidget(self.predictorClear)
+
+        self.preConfirm = QtWidgets.QPushButton(parent=self.DefaultWidget)
+        self.preConfirm.setMaximumSize(QtCore.QSize(16777215, 16777215))
+        self.preConfirm.setObjectName("preConfirm")
+        self.preButtonLayout.addWidget(self.preConfirm)
+
         self.PredictorLayout.addLayout(self.preButtonLayout)
         self.addOneLayer(self.preLayerLayout, self.predictorAdd)
 
@@ -178,12 +190,14 @@ class Ui_model(Pages):
         self.EncoderLabelOut.setText(_translate("Form", "Output Nodes"))
         self.encoderAdd.setText("Add One Layer")
         self.encoderClear.setText("Clear Layers")
+        self.enConfirm.setText("Confirm")
         self.PredictorLabel.setText("Predictor Architecture")
         self.PredictorTxt.setText("Linear Layers")
         self.PredictorLabelIn.setText("Input Nodes")
         self.PredictorLabelOut.setText("Output Nodes")
         self.predictorAdd.setText("Add One Layer")
         self.predictorClear.setText("Clear Layers")
+        self.preConfirm.setText("Confirm")
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.DefaultTab), "Default Architecture")
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), "Load Architecture")
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_3), "Load Model")
@@ -192,6 +206,8 @@ class Ui_model(Pages):
         self.encoderClear.clicked.connect(lambda: self.clear_Layers(self.enLayerLayout, self.encoderAdd))
         self.predictorAdd.clicked.connect(lambda: self.addOneLayer(self.preLayerLayout, self.predictorAdd))
         self.predictorClear.clicked.connect(lambda: self.clear_Layers(self.preLayerLayout, self.predictorAdd))
+        self.enConfirm.clicked.connect(lambda: self.layer_confirm(self.enLayerLayout, self.encoderAdd, clear=False))
+        self.preConfirm.clicked.connect(lambda: self.layer_confirm(self.preLayerLayout, self.predictorAdd, clear=False))
 
     def addOneLayer(self, targetLayout, targetButton: QtWidgets.QPushButton):
         count = targetLayout.count()
@@ -228,7 +244,7 @@ class Ui_model(Pages):
         if targetLayout.count() == 10:
             targetButton.setEnabled(False)
 
-    def clear_Layers(self, parent_layout: QtWidgets, targetButton: QtWidgets.QPushButton):
+    def clear_Layers(self, parent_layout: QtWidgets.QBoxLayout, targetButton: QtWidgets.QPushButton):
         # 保留第一个布局，从第二个开始移除
         while parent_layout.count() > 1:
             # 获取第二个布局项（索引为1）
@@ -240,9 +256,9 @@ class Ui_model(Pages):
                 # 移除布局本身
                 layout_item.layout().deleteLater()
             parent_layout.removeItem(layout_item)
-        targetButton.setEnabled(True)
+        self.layer_confirm(parent_layout, targetButton, clear=True)
 
-    def clear_layout(self, layout):
+    def clear_layout(self, layout: QtWidgets.QLayout):
         while layout.count():
             item = layout.takeAt(0)
             widget = item.widget()
@@ -250,3 +266,14 @@ class Ui_model(Pages):
                 widget.deleteLater()
             elif item.layout() is not None:
                 self.clear_layout(item.layout())
+
+    def layer_confirm(self, targetLayout: QtWidgets.QBoxLayout, targetButton: QtWidgets.QPushButton, clear: bool):
+        for index in range(targetLayout.count()):
+            layoutItem = targetLayout.itemAt(index)
+            if layoutItem.layout() is not None:
+                self.set_enable(layoutItem.layout(), clear)
+        targetButton.setEnabled(clear)
+
+    def set_enable(self, layout: QtWidgets.QLayout, clear: bool):
+        layout.itemAt(1).widget().setEnabled(clear)
+        layout.itemAt(2).widget().setEnabled(clear)

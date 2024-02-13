@@ -146,7 +146,9 @@ class Ui_MainWindow(QMainWindow):
         self.eventEncoderButton.setText(_translate("MainWindow", "Event Autoencoder"))
         self.interpretationButton.setText(_translate("MainWindow", "Interpretation"))
 
+
     def click_bind(self):
+        self.autoencodeButton.clicked.connect(lambda: self.send_url())
         self.inputButton.clicked.connect(lambda: self.page_switch_clicked(0))
         self.modelButton.clicked.connect(lambda: self.page_switch_clicked(1))
         self.autoencodeButton.clicked.connect(lambda: self.page_switch_clicked(2))
@@ -185,7 +187,6 @@ class Ui_MainWindow(QMainWindow):
 
     def load_input_url(self, url_dic):
         self.input_url = url_dic
-
 
     def print_in_textBrowser(self, text):
         self.textBrowser.setText(text)

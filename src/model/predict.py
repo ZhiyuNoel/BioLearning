@@ -9,7 +9,7 @@ from torch import nn, optim
 from torch.utils.data import DataLoader
 
 from src.model import LSTMAutoencoder, LSTMEncoder, Predictor, precision_cal, select_device, model_train, model_loader
-from src.utils import DataLoad, DataFileLoad, VideoFrameDataset, increment_path
+from src.utils import DataLoad, DataFileLoad, VideoFrameDataset, increment_path, loader_pipeline
 
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[1]  # YOLOv5 root directory
@@ -33,7 +33,6 @@ def autoencoder_test(model: nn.Module, device, dataloader, criterion):
 
     return avg_test_loss
 
-
 def run(train_video_path, train_label_path,
         test_video_path="",
         test_label_path="",
@@ -49,24 +48,11 @@ def run(train_video_path, train_label_path,
         train=True,  ## Apply model for train
         test=False,  ## Apple model for test
         save=True  ## Save model or not
-    ):
-
-    ## load file names (relative path)
-    file_paths = DataFileLoad(train_video=train_video_path, train_label=train_label_path, test_video=test_video_path,
-                              test_label=test_label_path)
-    ## Load label content and video frames from file path
-    train_video, train_label = DataLoad(video_path=file_paths['train_video'], label_path=file_paths['train_label'],
-                                        imgz=imgz)
-    test_video, test_label = DataLoad(video_path=file_paths['test_video'], label_path=file_paths['test_label'],
-                                      imgz=imgz)
-    ## convert to Dataloader (DataSets)
-    train_set = VideoFrameDataset(train_video, train_label, window_size, stride=win_stride)
-    train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
-
-    test_set = VideoFrameDataset(test_video, test_label, window_size=None, stride=None)
-    test_loader = DataLoader(test_set, batch_size=1)
-
-    # print(next(iter(test_loader))[0].shape)
+        ):
+    train_loader, test_loader = loader_pipeline(train_video=train_video_path, train_label=train_label_path,
+                                                test_video=test_video_path, test_label=test_label_path,
+                                                window_size=window_size, win_stride=win_stride, imgz=imgz,
+                                                batch_size=batch_size)
 
     ## Set device selection
     device = select_device(device)

@@ -104,7 +104,7 @@ class Ui_inputpage(Pages):
         self.clearInput.setText(_translate("Form", "Clear Input"))
         self.previous.setVisible(False)
         self.next.setVisible(False)
-        self.label.setText(_translate("Form", " Select Label"))
+        self.label.setText(_translate("Form", "Select Label"))
         self.yaml.setText(_translate("Form", "Load Yaml"))
         self.sample.setText(_translate("Form", "Load Sample"))
         self.sample.clicked.connect(lambda: self.load_samples())
@@ -125,7 +125,6 @@ class Ui_inputpage(Pages):
     def choose_file(self):  # 槽函数
         video_file = ('.avi', '.mp4')
         directory_path = QFileDialog.getExistingDirectory(self, "Select Directory", "./")
-        self.input_trans.append(directory_path)
         if directory_path:  # Check if the directory_path is not empty
             try:
                 fileName = [directory_path + '/' + f for f in sorted(os.listdir(directory_path))
@@ -133,15 +132,15 @@ class Ui_inputpage(Pages):
                 if len(fileName) == 0:
                     self.text = "Invalid Input, Please Input Again!"
                     return
+                self.input_trans.append(directory_path)
                 self.load_video(fileName)
             except FileNotFoundError:
-                print(f"The directory {directory_path} was not found.")
+                self.text = f"The directory {directory_path} was not found."
         else:
-            print("Directory path is not set.")
+            self.text = "Directory path is not set."
 
     def choose_label(self):
         directory_path = QFileDialog.getExistingDirectory(self, "Select Directory", "./")
-        self.input_trans.append(directory_path)
         if directory_path:  # Check if the directory_path is not empty
             try:
                 fileName = [directory_path + '/' + f for f in sorted(os.listdir(directory_path)) if
@@ -149,7 +148,7 @@ class Ui_inputpage(Pages):
                 if len(fileName) == 0 or len(fileName) != self.num_file:
                     self.text = "Invalid Input, Please Input Again!"
                     return
-
+                self.input_trans.append(directory_path)
                 self.text = "Successfully Upload Label, The Video-Label Pair recorded as : \n"
                 file_keys = list(self.input_dict.keys())
                 for label_file, video_file in zip(fileName, file_keys):
@@ -159,9 +158,9 @@ class Ui_inputpage(Pages):
                 # Continue with processing file_names
                 self.label.setEnabled(False)
             except FileNotFoundError:
-                print(f"The directory {directory_path} was not found.")
+                self.text = f"The directory {directory_path} was not found."
         else:
-            print("Directory path is not set.")
+            self.text = "Directory path is not set."
 
     def load_video(self, fileName):
         self.text = "Your Input Videos: \n"
@@ -222,6 +221,8 @@ class Ui_inputpage(Pages):
             widget = self.videoDisplay.widget(0)  # 获取当前的小部件
             self.videoDisplay.removeWidget(widget)  # 从QStackedWidget中移除小部件
             widget.deleteLater()  # 删除小部件
+        self.input_trans = []
+        self.send_url(self.input_trans)
 
     def setParent(self, mainWindow):
         self.parent = mainWindow

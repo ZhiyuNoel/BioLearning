@@ -5,7 +5,28 @@ import os.path
 import numpy as np
 import os
 import torch
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader
+
+
+def loader_pipeline(train_video, train_label, test_video, test_label,
+                    imgz=(25, 25), window_size=100, batch_size=10, win_stride=2):
+
+    file_paths = DataFileLoad(train_video=train_video, train_label=train_label, test_video=test_video,
+                              test_label=test_label)
+
+    ## Load label content and video frames from file path
+    train_video, train_label = DataLoad(video_path=file_paths['train_video'], label_path=file_paths['train_label'],
+                                        imgz=imgz)
+    test_video, test_label = DataLoad(video_path=file_paths['test_video'], label_path=file_paths['test_label'],
+                                      imgz=imgz)
+
+    ## convert to Dataloader (DataSets)
+    train_set = VideoFrameDataset(train_video, train_label, window_size, stride=win_stride)
+    train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
+
+    test_set = VideoFrameDataset(test_video, test_label, window_size=None, stride=None)
+    test_loader = DataLoader(test_set, batch_size=1)
+    return train_loader, test_loader
 
 
 class VideoFrameDataset(Dataset):
