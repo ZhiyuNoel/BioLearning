@@ -117,47 +117,27 @@ class Ui_inputpage(Pages):
         self.clearInput.clicked.connect(lambda: self.send_url(self.input_trans))
 
     def set_video(self, fileurl, videopage):
-        if fileurl == None:
-            return
-        else:
+        if fileurl is not None:
             videopage.set_video(fileurl, videoPlay.VideoWidget.VIDEO_TYPE_OFFLINE, False)
+        return
+
 
     def choose_file(self):  # 槽函数
-        isVideo = True
         video_file = ('.avi', '.mp4')
         directory_path = QFileDialog.getExistingDirectory(self, "Select Directory", "./")
         self.input_trans.append(directory_path)
-        fileName = [directory_path + '/' + f for f in sorted(os.listdir(directory_path)) if f.endswith(video_file)]
-        if len(fileName) == 0:
-            self.text = "Not Video"
-            return
-
-        for file in fileName:
-            if file.split(".")[-1] != 'avi' and file.split(".")[-1] != 'mp4':
-                isVideo = False
-
-        if isVideo:
-            self.load_video(fileName)
+        if directory_path:  # Check if the directory_path is not empty
+            try:
+                fileName = [directory_path + '/' + f for f in sorted(os.listdir(directory_path))
+                            if f.endswith(video_file)]
+                if len(fileName) == 0:
+                    self.text = "Invalid Input, Please Input Again!"
+                    return
+                self.load_video(fileName)
+            except FileNotFoundError:
+                print(f"The directory {directory_path} was not found.")
         else:
-            self.text = "Not Video"
-            return
-
-    def load_video(self, fileName):
-        self.text = "Your Input Videos: \n"
-        self.label.setEnabled(True)
-        self.yaml.setEnabled(False)
-        self.sample.setEnabled(False)
-        self.num_file = len(fileName)
-        self.select.setEnabled(False)
-        for file in fileName:
-            self.previous.setVisible(True)
-            self.next.setVisible(True)
-            videopage = videoPlay.VideoWidget()
-            videopage.setObjectName("page")
-            self.videoDisplay.addWidget(videopage)
-            self.set_video(file, videopage)
-            self.text += ("\n" + file.split("/")[-1])
-            self.input_dict[file] = ""
+            print("Directory path is not set.")
 
     def choose_label(self):
         directory_path = QFileDialog.getExistingDirectory(self, "Select Directory", "./")
@@ -177,12 +157,28 @@ class Ui_inputpage(Pages):
                     self.text += ("Video: " + video_file.split("/")[-1] +
                                   "  Label: " + label_file.split("/")[-1] + "\n")
                 # Continue with processing file_names
+                self.label.setEnabled(False)
             except FileNotFoundError:
                 print(f"The directory {directory_path} was not found.")
         else:
             print("Directory path is not set.")
 
-
+    def load_video(self, fileName):
+        self.text = "Your Input Videos: \n"
+        self.label.setEnabled(True)
+        self.yaml.setEnabled(False)
+        self.sample.setEnabled(False)
+        self.num_file = len(fileName)
+        self.select.setEnabled(False)
+        for file in fileName:
+            self.previous.setVisible(True)
+            self.next.setVisible(True)
+            videopage = videoPlay.VideoWidget()
+            videopage.setObjectName("page")
+            self.videoDisplay.addWidget(videopage)
+            self.set_video(file, videopage)
+            self.text += ("\n" + file.split("/")[-1])
+            self.input_dict[file] = ""
 
     def choose_yaml(self):
         yamlFile, _ = QFileDialog.getOpenFileName(self, "Select File", "",

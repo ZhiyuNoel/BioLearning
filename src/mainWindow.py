@@ -147,20 +147,6 @@ class Ui_MainWindow(QMainWindow):
         self.interpretationButton.setText(_translate("MainWindow", "Interpretation"))
 
     def click_bind(self):
-        self.predictorButton.clicked.connect(lambda: self.print_in_textBrowser("Click the train prediction button"))
-        self.autoencodeButton.clicked.connect(lambda: self.print_in_textBrowser("Click the train autoencoder button"))
-        self.autoencodeButton.clicked.connect(lambda: self.send_url())
-        self.modelButton.clicked.connect(lambda: self.print_in_textBrowser("Click the select model button"))
-        self.inputButton.clicked.connect(lambda: self.print_in_textBrowser("Click the select input button"))
-        self.timeButton.clicked.connect(lambda: self.print_in_textBrowser("Click the select time button"))
-        self.eventModelButton.clicked.connect(lambda: self.print_in_textBrowser("Click the select event model button"))
-        self.eventPredictorButton.clicked.connect(
-            lambda: self.print_in_textBrowser("Click the select event predictor button"))
-        self.eventEncoderButton.clicked.connect(
-            lambda: self.print_in_textBrowser("Click the select event encoder button"))
-        self.interpretationButton.clicked.connect(
-            lambda: self.print_in_textBrowser("Click the select interpretation button"))
-
         self.inputButton.clicked.connect(lambda: self.page_switch_clicked(0))
         self.modelButton.clicked.connect(lambda: self.page_switch_clicked(1))
         self.autoencodeButton.clicked.connect(lambda: self.page_switch_clicked(2))
