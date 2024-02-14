@@ -7,6 +7,8 @@
 
 
 from PyQt6 import QtCore, QtWidgets
+from PyQt6.QtCore import pyqtSignal
+
 from .Pages import Pages
 
 '''
@@ -23,6 +25,9 @@ The load Model allows user to directly load a pytorch model for further training
 class Ui_model(Pages):
     encoderLayers = []
     predictorLayers = []
+    _signal_model_dict = pyqtSignal(dict)
+    model_dict = {}
+
     def __init__(self, modelPage):
         super().__init__()
         modelPage.setObjectName("Form")
@@ -160,14 +165,12 @@ class Ui_model(Pages):
         self.PredictorLayout.addLayout(self.preButtonLayout)
         self.addOneLayer(self.preLayerLayout, self.predictorAdd)
 
-
         self.horizontalLayout_8 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_8.setObjectName("horizontalLayout_8")
         self.PredictorLayout.addLayout(self.horizontalLayout_8)
         self.PredictorLayout.addStretch()
         self.OverallLayout.addLayout(self.PredictorLayout)
         self.tabWidget.addTab(self.DefaultTab, "")
-
 
         # Tab 2
         self.tab_2 = QtWidgets.QWidget()
@@ -273,7 +276,13 @@ class Ui_model(Pages):
             if layoutItem.layout() is not None:
                 self.set_enable(layoutItem.layout(), clear)
         targetButton.setEnabled(clear)
+        if clear:
+            self.model_dict = {}
+        self.send_dict(self.model_dict)
 
     def set_enable(self, layout: QtWidgets.QLayout, clear: bool):
         layout.itemAt(1).widget().setEnabled(clear)
         layout.itemAt(2).widget().setEnabled(clear)
+
+    def send_dict(self, dict):
+        self._signal_model_dict.emit(dict)

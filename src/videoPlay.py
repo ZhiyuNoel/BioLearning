@@ -3,6 +3,7 @@ import time
 from PyQt6.QtCore import *
 from PyQt6.QtGui import *
 from PyQt6.QtWidgets import *
+from PyQt6 import QtCore
 import cv2
 
 
@@ -29,7 +30,7 @@ class VideoWidget(QWidget):
         self.status = self.STATU_INIT
 
         self.pictureLabel = QLabel()
-
+        self.pictureLabel.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter | QtCore.Qt.AlignmentFlag.AlignVCenter)
         self.playButton = QPushButton()
 
         self.playButton.setEnabled(True)
@@ -166,6 +167,8 @@ class VideoWidget(QWidget):
         qr.moveCenter(cp)
 
         self.move(qr.topLeft())
+
+
 
 class Communicate(QObject):
     signal = pyqtSignal(str)

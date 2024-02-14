@@ -195,7 +195,9 @@ class LinearAutoencoder(nn.Module):
         self.encoder = LinearEncoder(input_size=input_size, hidden_size=hidden_size, latent_size=latent_size)
         self.decoder = LinearDecoder(latent_size=latent_size, hidden_size=hidden_size, output_size=output_size)
 
-    def forward(self, x):  # x: bs,input_size
+    def forward(self, x, device):  # x: bs,input_size
+        self.encoder.to(device=device)
+        self.decoder.to(device=device)
         batch, seq_len, channel, width, height = x.size()
         c_out = x.view(batch * seq_len, channel * height * width)  #
         feat = self.encoder(c_out)  # feat: bs,latent_size
@@ -208,6 +210,8 @@ class LinearAutoencoder(nn.Module):
 ========================================================================================================================
 Predictor
 '''
+
+
 class Predictor(nn.Module):
     num_class = 1
     hidden_size1 = 64
@@ -226,13 +230,13 @@ class Predictor(nn.Module):
     def forward(self, x):  ## input [batch_size, seq_len, 128]
         x_out = self.extractor(x)
         if len(x_out) != 1:
-           x_out = x_out[0]
+            x_out = x_out[0]
         batch_size, seq_len, features = x_out.size()
         out, _ = self.LSTM_classifier(x_out)  ## out = [batch_size, seq_len, 64]
         out = out.contiguous().view(-1, self.hidden_size1)  ## out = [batch_size * seq_len, 64]
         out = self.fc_1(out)  # 中间层激活 out = [batch_size * seq_len, 32]
         out = self.fc_2(out)  ## out = [batch_size * seq_len, 1]
-        out = out.view(batch_size, seq_len, -1) ## [10, 5, 1]
+        out = out.view(batch_size, seq_len, -1)  ## [10, 5, 1]
         out = torch.sigmoid(out)
 
         return out.squeeze(-1)

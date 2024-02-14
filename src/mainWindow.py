@@ -15,15 +15,18 @@ from src.subpages import (Ui_inputpage, Ui_model, Ui_encoder,
 
 class Ui_MainWindow(QMainWindow):
     subpages = {}
+    model_storage = {}
     input_url = []
     pages = [Ui_inputpage, Ui_model, Ui_encoder, Ui_pred, Ui_time, Ui_eveModel,
              Ui_evePre, Ui_eveEncoder, Ui_inter]
     page_names = ["Ui_inputpage", "Ui_model", "Ui_encoder", "Ui_pred", "Ui_time", "Ui_eveModel",
                   "Ui_evePre", "Ui_eveEncoder", "Ui_inter"]
     _signal_url = pyqtSignal(list)
+    _signal_model = pyqtSignal(dict)
 
     def __init__(self, MainWindow):
         super().__init__()
+
         MainWindow.resize(1000, 800)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Minimum)
         sizePolicy.setHorizontalStretch(0)
@@ -146,9 +149,9 @@ class Ui_MainWindow(QMainWindow):
         self.eventEncoderButton.setText(_translate("MainWindow", "Event Autoencoder"))
         self.interpretationButton.setText(_translate("MainWindow", "Interpretation"))
 
-
     def click_bind(self):
-        self.autoencodeButton.clicked.connect(lambda: self.send_url())
+        self.autoencodeButton.clicked.connect(self.send_url)
+        self.autoencodeButton.clicked.connect(self.send_model)
         self.inputButton.clicked.connect(lambda: self.page_switch_clicked(0))
         self.modelButton.clicked.connect(lambda: self.page_switch_clicked(1))
         self.autoencodeButton.clicked.connect(lambda: self.page_switch_clicked(2))
@@ -177,16 +180,26 @@ class Ui_MainWindow(QMainWindow):
 
         self.additional_connect()
 
-
     def additional_connect(self):
-        self.subpages["Ui_inputpage"]._signal_list.connect(self.load_input_url)
+        self.subpages["Ui_inputpage"]._signal_list.connect(self.load_url)
+        self.subpages["Ui_model"]._signal_model_dict.connect(self.load_model)
         self._signal_url.connect(self.subpages["Ui_encoder"].receive_url)
+        self._signal_model.connect(self.subpages["Ui_encoder"].receive_model)
+        # self._signal_model.connect(self.subpage["Ui_pred"])
+
+    def load_url(self, input_url):
+        self.input_url = input_url
+        print(self.input_url)
+
+    def load_model(self, input_model):
+        self.model_storage = input_model
+        print(self.model_storage)
+
+    def send_model(self):
+        self._signal_model.emit(self.model_storage)
 
     def send_url(self):
         self._signal_url.emit(self.input_url)
-
-    def load_input_url(self, url_dic):
-        self.input_url = url_dic
 
     def print_in_textBrowser(self, text):
         self.textBrowser.setText(text)

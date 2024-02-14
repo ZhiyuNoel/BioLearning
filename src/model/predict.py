@@ -1,21 +1,257 @@
 import argparse
+import math
 import os
 import sys
 from pathlib import Path
 
 import numpy as np
 import torch
+from PyQt6.QtCore import *
+from PyQt6.QtGui import QImage
 from torch import nn, optim
 from torch.utils.data import DataLoader
 
-from src.model import LSTMAutoencoder, LSTMEncoder, Predictor, precision_cal, select_device, model_train, model_loader
-from src.utils import DataLoad, DataFileLoad, VideoFrameDataset, increment_path, loader_pipeline
+from src.model import *
+from src.utils import increment_path, loader_pipeline
 
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[1]  # YOLOv5 root directory
 if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))  # add ROOT to PATH
 ROOT = Path(os.path.relpath(ROOT, Path.cwd()))  # relative
+
+
+class ModelThread(QThread):
+    update_progress = pyqtSignal(int)
+    update_text = pyqtSignal(str)
+    update_pic = pyqtSignal(QImage, QImage)
+
+    def __init__(self, parent, model: nn.Module, data_loader: DataLoader, device=None):
+        super().__init__(parent=parent)
+        self.data_loader = data_loader
+        self.is_running = True
+        self.paused = False
+        self.device = select_device("mps" if torch.backends.mps.is_available() else "0") if device is None else device
+        self.model = model.to(self.device)
+        self.criterion = nn.MSELoss()
+
+    def stop(self):
+        self.is_running = False
+
+    def pause(self):
+        self.paused = True
+
+    def resume(self):
+        self.paused = False
+
+    def process_images(self, images):
+        processed_images = []
+        for img in images:
+            img = img.cpu().detach().numpy().transpose((1, 2, 0))  # CHW to HWC
+            img = (img * 255).astype(np.uint8)  # Normalize
+            qimg = QImage(img, img.shape[1], img.shape[0], img.strides[0], QImage.Format.Format_Grayscale8)
+            processed_images.append(qimg)
+        self.update_pic.emit(*processed_images)
+
+    def get_model(self):
+        return self.model
+
+    def update_model(self, model:nn.Module):
+        self.model = model
+
+
+class TestThread(ModelThread):
+    def run(self):
+        self.model.eval()
+        while self.is_running:
+            with torch.no_grad():
+                for testImgs, _ in self.data_loader:
+                    testImgs = testImgs.to(self.device)
+                    reconstructed_imgs = self.model(testImgs, self.device)
+                    for index, (tFrame, rFrame) in enumerate(zip(testImgs[0], reconstructed_imgs[0])):
+                        if self.paused or not self.is_running:
+                            break
+                        if index % 1000 == 0:
+                            self.process_images([tFrame, rFrame])
+                    if not self.is_running:
+                        break
+
+
+class TrainingThread(ModelThread):
+    def __init__(self, parent, model: nn.Module, train_loader: DataLoader, start_lr=0.001, end_lr=0.0001):
+        super().__init__(parent, model, train_loader)
+        self.optimizer = optim.Adam(self.model.parameters(), lr=start_lr)
+        self.start_lr = start_lr
+        # Configure scheduler
+        step_size = self.calculate_step_size(start_lr, end_lr, len(train_loader))
+        gamma = 0.1 if start_lr >= end_lr else 10
+        self.schedule = optim.lr_scheduler.StepLR(self.optimizer, step_size=step_size, gamma=gamma)
+
+    def calculate_step_size(self, start_lr, end_lr, length):
+        if start_lr >= end_lr:
+            return round(length / (math.log(start_lr / end_lr, 10) + 1))
+        else:
+            return round(length / (math.log(end_lr / start_lr, 10) + 1))
+
+    def run(self):
+        text = "Start Training: "
+        EPOCH = 0
+        while True:
+            EPOCH += 1
+            text += f" \n EPOCH {EPOCH}: "
+            self.optimizer.param_groups[0]['lr'] = self.start_lr  # 重置为初始学习率
+            for step, (frames, labels) in enumerate(self.data_loader):
+                while self.paused:
+                    QEventLoop().processEvents()
+
+                frames, labels = frames.to(device=self.device), labels.to(device=self.device)
+                self.optimizer.zero_grad()
+                outputs = self.model(frames, self.device)
+                loss = self.criterion(outputs, frames)
+                loss.backward()
+                # 更新参数
+                self.optimizer.step()
+                self.schedule.step()
+                if step % 10 == 0:
+                    self.process_images([frames[0, 0], outputs[0, 0]])
+                self.update_progress.emit(step)  # 发送进度信号
+                self.update_text.emit(text + f"Step {step}: Loss: {loss}")  # 发送文本更新信号
+                if not self.is_running:
+                    break
+            print("学习率：%f" % (self.optimizer.param_groups[0]['lr']))
+            text += f"Step {step}: Loss: {loss}"
+
+
+# class TestThread(QThread):
+#     update_progress = pyqtSignal(int)
+#     update_text = pyqtSignal(str)
+#     update_pic = pyqtSignal(QImage, QImage)
+#
+#     def __init__(self, parent, model: nn.Module, testLoader: DataLoader):
+#         super().__init__(parent=parent)
+#         self.is_running = True
+#         self.paused = False
+#         self.model = model
+#         self.dataloader = testLoader
+#         self.criterion = nn.MSELoss()
+#         self.device = select_device("mps" if torch.backends.mps.is_available() else "0")
+#
+#     def run(self):
+#         text = "Start test: "
+#         self.model.to(device=self.device)
+#         self.model.eval()
+#         while True:
+#             test_loss = 0
+#             with torch.no_grad():  # 在评估过程中不计算梯度
+#                 for testImgs, _ in self.dataloader:  # 假设test_loader是您的测试数据加载器
+#                     while self.paused:
+#                         QEventLoop().processEvents()
+#                     if not self.is_running:
+#                         break
+#                     # 前向传播
+#                     testImgs = testImgs.to(self.device)
+#                     reconstructed_imgs = self.model(testImgs, self.device)
+#                     # 计算损失
+#                     test_loss = self.criterion(reconstructed_imgs, testImgs)
+#
+#                     tFrame = testImgs[0, 0].cpu().detach().numpy().transpose((1, 2, 0))  # 取第一张图像，并CHW转换为HWC
+#                     rFrame = reconstructed_imgs[0, 0].cpu().detach().numpy().transpose((1, 2, 0))  # 同上
+#                     tFrame = (tFrame * 255).astype(np.uint8)
+#                     rFrame = (rFrame * 255).astype(np.uint8)
+#                     # 创建QImage对象
+#                     frame_qimage = QImage(tFrame, tFrame.shape[0], tFrame.shape[1],
+#                                           tFrame.strides[0], QImage.Format.Format_Grayscale8)
+#                     output_qimage = QImage(rFrame, rFrame.shape[0], rFrame.shape[1],
+#                                            rFrame.strides[0], QImage.Format.Format_Grayscale8)
+#                     # 发送信号
+#                     self.update_pic.emit(frame_qimage, output_qimage)
+#
+#     def set_model(self, model:nn.Module):
+#         self.model = model
+#
+#     def stop(self):
+#         self.is_running = False
+#
+#     def pause(self):
+#         self.paused = True
+#
+#     def resume(self):
+#         self.paused = False
+#
+#
+# class TrainingThread(QThread):
+#     update_progress = pyqtSignal(int)
+#     update_text = pyqtSignal(str)
+#     update_pic = pyqtSignal(QImage, QImage)
+#
+#     def __init__(self, parent, model: nn.Module, train_loader: DataLoader, start_lr=0.0001, end_lr=0.0001):
+#         super().__init__(parent=parent)
+#         self.train_loader = train_loader
+#         self.is_running = True
+#         self.paused = False
+#         self.device = select_device("mps" if torch.backends.mps.is_available() else "0")
+#         self.model = model.to(self.device)
+#         self.optimizer = optim.Adam(self.model.parameters(), lr=start_lr)
+#         self.criterion = nn.MSELoss()
+#         self.start_lr = start_lr
+#         if start_lr >= end_lr:
+#             step_size = round(len(train_loader) / (math.log(start_lr / end_lr, 10) + 1))
+#             print(len(train_loader), step_size)
+#             self.schedule = optim.lr_scheduler.StepLR(self.optimizer, step_size=step_size, gamma=0.1)
+#         else:
+#             step_size = round(len(train_loader) / (math.log(end_lr / start_lr, 10) + 1))
+#             self.schedule = optim.lr_scheduler.StepLR(self.optimizer, step_size=step_size, gamma=10)
+#
+#     def run(self):
+#         text = "Start Training: "
+#         EPOCH = 0
+#         while True:
+#             EPOCH += 1
+#             text += f" \n EPOCH {EPOCH}: "
+#             self.optimizer.param_groups[0]['lr'] = self.start_lr  # 重置为初始学习率
+#             for step, (frames, labels) in enumerate(self.train_loader):
+#                 while self.paused:
+#                     QEventLoop().processEvents()
+#                 if not self.is_running:
+#                     break
+#                 frames, labels = frames.to(device=self.device), labels.to(device=self.device)
+#                 self.optimizer.zero_grad()
+#                 outputs = self.model(frames, self.device)
+#                 loss = self.criterion(outputs, frames)
+#                 loss.backward()
+#                 # 更新参数
+#                 self.optimizer.step()
+#                 self.schedule.step()
+#
+#                 frames_np = frames[0, 0].cpu().detach().numpy().transpose((1, 2, 0))  # 取第一张图像，并CHW转换为HWC
+#                 outputs_np = outputs[0, 0].cpu().detach().numpy().transpose((1, 2, 0))  # 同上
+#                 frames_np = (frames_np * 255).astype(np.uint8)
+#                 outputs_np = (outputs_np * 255).astype(np.uint8)
+#                 if step % 10 == 0:
+#                     # 创建QImage对象
+#                     frame_qimage = QImage(frames_np, frames_np.shape[0], frames_np.shape[1],
+#                                           frames_np.strides[0], QImage.Format.Format_Grayscale8)
+#                     output_qimage = QImage(outputs_np, outputs_np.shape[0], outputs_np.shape[1],
+#                                            outputs_np.strides[0], QImage.Format.Format_Grayscale8)
+#                     # 发送信号
+#                     self.update_pic.emit(frame_qimage, output_qimage)
+#
+#                 self.update_progress.emit(step)  # 发送进度信号
+#                 self.update_text.emit(text + f"Step {step}: Loss: {loss}")  # 发送文本更新信号
+#             print("学习率：%f" % (self.optimizer.param_groups[0]['lr']))
+#             text += f"Step {step}: Loss: {loss}"
+#
+#     def get_model(self):
+#         return self.model
+#
+#     def stop(self):
+#         self.is_running = False
+#
+#     def pause(self):
+#         self.paused = True
+#
+#     def resume(self):
+#         self.paused = False
 
 
 def autoencoder_test(model: nn.Module, device, dataloader, criterion):
@@ -32,6 +268,7 @@ def autoencoder_test(model: nn.Module, device, dataloader, criterion):
     avg_test_loss = test_loss / len(dataloader)
 
     return avg_test_loss
+
 
 def run(train_video_path, train_label_path,
         test_video_path="",
@@ -64,9 +301,8 @@ def run(train_video_path, train_label_path,
             Autoencoder = model_loader(weight, device)
         else:
             Autoencoder = LSTMAutoencoder(device)
-
+        criterion = nn.MSELoss()
         if train:
-            criterion = nn.MSELoss()
             optimizer = optim.Adam(Autoencoder.parameters(), lr=learning_rate)
             Autoencoder.train()
             print(f"Load model to device: {device}, Start Autoencoder training ............")

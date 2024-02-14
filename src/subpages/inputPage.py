@@ -50,7 +50,6 @@ class Ui_inputpage(Pages):
 
         self.select = QtWidgets.QPushButton(parent=self.outerLayout)
         self.select.setObjectName("pushButton_3")
-        self.select.clicked.connect(lambda: self.choose_file())
         self.horizontalLayout_2.addWidget(self.select)
 
         self.next = QtWidgets.QPushButton(parent=self.outerLayout)
@@ -70,14 +69,12 @@ class Ui_inputpage(Pages):
         self.label = QtWidgets.QPushButton(parent=self.outerLayout)
         self.label.setMinimumSize(QtCore.QSize(100, 50))
         self.label.setObjectName("pushButton_4")
-        self.label.clicked.connect(lambda: self.choose_label())
         self.label.setEnabled(False)
         self.verticalLayout_2.addWidget(self.label)
 
         self.yaml = QtWidgets.QPushButton(parent=self.outerLayout)
         self.yaml.setMinimumSize(QtCore.QSize(100, 50))
         self.yaml.setObjectName("pushButton_5")
-        self.yaml.clicked.connect(lambda: self.choose_yaml())
         self.verticalLayout_2.addWidget(self.yaml)
 
         self.sample = QtWidgets.QPushButton(parent=self.outerLayout)
@@ -88,8 +85,8 @@ class Ui_inputpage(Pages):
         self.clearInput = QtWidgets.QPushButton(parent=self.outerLayout)
         self.clearInput.setMinimumSize(QtCore.QSize(100, 50))
         self.clearInput.setObjectName("clearInput_Button")
-        self.clearInput.clicked.connect(lambda: self.clear())
         self.verticalLayout_2.addWidget(self.clearInput)
+        self.verticalLayout_2.addStretch()
 
         self.horizontalLayout.addLayout(self.verticalLayout_2)
         self.retranslateUi(inputPage)
@@ -107,6 +104,10 @@ class Ui_inputpage(Pages):
         self.label.setText(_translate("Form", "Select Label"))
         self.yaml.setText(_translate("Form", "Load Yaml"))
         self.sample.setText(_translate("Form", "Load Sample"))
+
+        self.select.clicked.connect(lambda: self.choose_file())
+        self.label.clicked.connect(lambda: self.choose_label())
+        self.yaml.clicked.connect(lambda: self.choose_yaml())
         self.sample.clicked.connect(lambda: self.load_samples())
         self.next.clicked.connect(lambda: self.next_click())
         self.previous.clicked.connect(lambda: self.previous_click())
@@ -115,11 +116,7 @@ class Ui_inputpage(Pages):
         self.clearInput.clicked.connect(lambda: self.send_data(self.text))
         self.label.clicked.connect(lambda: self.send_url(self.input_trans))
         self.clearInput.clicked.connect(lambda: self.send_url(self.input_trans))
-
-    def set_video(self, fileurl, videopage):
-        if fileurl is not None:
-            videopage.set_video(fileurl, videoPlay.VideoWidget.VIDEO_TYPE_OFFLINE, False)
-        return
+        self.clearInput.clicked.connect(lambda: self.clear())
 
 
     def choose_file(self):  # 槽函数
@@ -223,6 +220,11 @@ class Ui_inputpage(Pages):
             widget.deleteLater()  # 删除小部件
         self.input_trans = []
         self.send_url(self.input_trans)
+
+    def set_video(self, fileurl, videopage):
+        if fileurl is not None:
+            videopage.set_video(fileurl, videoPlay.VideoWidget.VIDEO_TYPE_OFFLINE, False)
+        return
 
     def setParent(self, mainWindow):
         self.parent = mainWindow
