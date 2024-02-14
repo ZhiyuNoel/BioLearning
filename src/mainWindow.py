@@ -26,7 +26,6 @@ class Ui_MainWindow(QMainWindow):
 
     def __init__(self, MainWindow):
         super().__init__()
-
         MainWindow.resize(1000, 800)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Minimum)
         sizePolicy.setHorizontalStretch(0)
@@ -207,3 +206,7 @@ class Ui_MainWindow(QMainWindow):
     ## 10 pages in total
     def page_switch_clicked(self, index):
         self.subpage.setCurrentIndex(index)
+
+    def closeEvent(self, event):
+        self.subpages['Ui_encoder'].close()
+        super().closeEvent(event)

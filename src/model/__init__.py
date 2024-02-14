@@ -3,4 +3,4 @@ from .LSTM import LSTMEncoder, LSTMDecoder, LSTMAutoencoder, Predictor
 from .LSTM import LSTMCovEncoder, LSTMCovDecoder, LSTMAutoencoder
 from .LSTM import LinearEncoder, LinearDecoder, LinearAutoencoder
 from .LSTM import LinearEncoder2, LinearDecoder2, LinearAutoencoder2
-from .predict import TrainingThread
+from .predict import TrainingThread, TestThread, ModelThread
