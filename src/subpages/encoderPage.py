@@ -32,7 +32,7 @@ class Ui_encoder(Pages):
         self.verticalLayoutWidget.setObjectName("verticalLayoutWidget")
         self.verticalLayout = QtWidgets.QVBoxLayout(self.verticalLayoutWidget)
         self.verticalLayout.setSizeConstraint(QtWidgets.QLayout.SizeConstraint.SetMinimumSize)
-        self.verticalLayout.setContentsMargins(5, 5, 0, 5)
+        self.verticalLayout.setContentsMargins(5, 5, 5, 5)
         self.verticalLayout.setObjectName("verticalLayout")
         self.imgWinLayout = QtWidgets.QHBoxLayout()
         self.imgWinLayout.setObjectName("horizontalLayout")
@@ -149,7 +149,7 @@ class Ui_encoder(Pages):
         self.operatorLayout.addLayout(self.parameterLayout)
         self.buttonLayout = QtWidgets.QHBoxLayout()
         self.buttonLayout.setSizeConstraint(QtWidgets.QLayout.SizeConstraint.SetNoConstraint)
-        self.buttonLayout.setContentsMargins(0, 5, 0, 5)
+        self.buttonLayout.setContentsMargins(0, 0, 0, 0)
         self.buttonLayout.setSpacing(5)
         self.buttonLayout.setObjectName("horizontalLayout_3")
 
