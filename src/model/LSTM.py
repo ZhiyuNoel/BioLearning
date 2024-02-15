@@ -1,3 +1,5 @@
+from abc import abstractmethod
+
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
@@ -12,7 +14,18 @@ LSTMAutoencoder combines decoder and encoder to implement the whole process
 '''
 
 
-class LSTMEncoder(nn.Module):
+class Model(nn.Module):
+    device = None
+
+    @abstractmethod
+    def forward(self, x):
+        pass
+
+    def load_device(self, device):
+        self.device = device
+
+
+class LSTMEncoder(Model):
     def __init__(self, input_size=625, hidden_size=128, num_layers=1):
         super(LSTMEncoder, self).__init__()
         self.lstm = nn.LSTM(input_size=input_size, hidden_size=hidden_size, num_layers=num_layers, batch_first=True)
@@ -25,10 +38,7 @@ class LSTMEncoder(nn.Module):
         return output, (hn, cn)
 
 
-import torch.nn as nn
-
-
-class LSTMDecoder(nn.Module):
+class LSTMDecoder(Model):
     def __init__(self, seq_len=5, hidden_size=128, output_size=625, num_layers=1):
         super(LSTMDecoder, self).__init__()
         self.seq_len = seq_len
@@ -65,12 +75,11 @@ class LSTMDecoder(nn.Module):
         return output
 
 
-class LSTMAutoencoder(nn.Module):
-    def __init__(self, device):
+class LSTMAutoencoder(Model):
+    def __init__(self):
         super(LSTMAutoencoder, self).__init__()
-        self.device = device
-        self.encoder = LSTMEncoder().to(device=self.device)
-        self.decoder = LSTMDecoder().to(device=self.device)
+        self.encoder = LSTMEncoder()
+        self.decoder = LSTMDecoder()
 
     def forward(self, x):
         # 编码
@@ -80,6 +89,11 @@ class LSTMAutoencoder(nn.Module):
         # 在实际应用中，可能需要调整维度或使用额外的全连接层来适配解码器的输入要求
         decoded = self.decoder.forward(output)
         return decoded
+
+    def load_device(self, device):
+        super().load_device(device)
+        self.encoder.to(self.device)
+        self.decoder.to(self.device)
 
 
 '''
@@ -92,7 +106,7 @@ LSTMAutoencoder combines decoder and encoder to implement the whole process
 '''
 
 
-class LSTMCovEncoder(nn.Module):
+class LSTMCovEncoder(Model):
     def __init__(self, in_channel=1, out_channel=32, hidden_size=128, num_layers=1):
         super(LSTMCovEncoder, self).__init__()
         self.out_channel = out_channel
@@ -115,7 +129,7 @@ class LSTMCovEncoder(nn.Module):
         return output, (hn, cn)
 
 
-class LSTMCovDecoder(nn.Module):
+class LSTMCovDecoder(Model):
     def __init__(self, in_channel=32, hidden_size=128, num_layers=1, output_channel=1):
         super(LSTMCovDecoder, self).__init__()
         self.output_channel = output_channel
@@ -146,7 +160,7 @@ class LSTMCovDecoder(nn.Module):
         return output
 
 
-class LSTMCovAutoencoder(nn.Module):
+class LSTMCovAutoencoder(Model):
     def __init__(self):
         super(LSTMCovAutoencoder, self).__init__()
         self.encoder = LSTMCovEncoder(in_channel=1, out_channel=32, hidden_size=128, num_layers=1)
@@ -165,7 +179,7 @@ Main components: The Linear Encoder, Linear Decoder and a Linear Autoencoder
 '''
 
 
-class LinearEncoder(nn.Module):
+class LinearEncoder(Model):
     def __init__(self, input_size=625, hidden_size=128, latent_size=16):
         super(LinearEncoder, self).__init__()
         self.linear1 = nn.Linear(input_size, hidden_size)
@@ -177,7 +191,7 @@ class LinearEncoder(nn.Module):
         return x
 
 
-class LinearDecoder(nn.Module):
+class LinearDecoder(Model):
     def __init__(self, latent_size=16, hidden_size=128, output_size=625):
         super(LinearDecoder, self).__init__()
         self.linear1 = torch.nn.Linear(latent_size, hidden_size)
@@ -189,21 +203,24 @@ class LinearDecoder(nn.Module):
         return x
 
 
-class LinearAutoencoder(nn.Module):
+class LinearAutoencoder(Model):
     def __init__(self, input_size=625, output_size=625, latent_size=16, hidden_size=128):
         super(LinearAutoencoder, self).__init__()
         self.encoder = LinearEncoder(input_size=input_size, hidden_size=hidden_size, latent_size=latent_size)
         self.decoder = LinearDecoder(latent_size=latent_size, hidden_size=hidden_size, output_size=output_size)
 
-    def forward(self, x, device):  # x: bs,input_size
-        self.encoder.to(device=device)
-        self.decoder.to(device=device)
+    def forward(self, x):  # x: bs,input_size
         batch, seq_len, channel, width, height = x.size()
         c_out = x.view(batch * seq_len, channel * height * width)  #
         feat = self.encoder(c_out)  # feat: bs,latent_size
         re_x = self.decoder(feat)  # re_x: bs, output_size
         out_x = re_x.view(batch, seq_len, channel, width, height)
         return out_x
+
+    def load_device(self, device):
+        super().load_device(device)
+        self.encoder = self.encoder.to(device)
+        self.decoder = self.decoder.to(device)
 
 
 '''
@@ -212,7 +229,7 @@ Predictor
 '''
 
 
-class Predictor(nn.Module):
+class Predictor(Model):
     num_class = 1
     hidden_size1 = 64
     hidden_size2 = 32
@@ -248,7 +265,7 @@ Tested, The second linear autoencoder
 '''
 
 
-class LinearEncoder2(nn.Module):
+class LinearEncoder2(Model):
     def __init__(self):
         super(LinearEncoder2, self).__init__()
         # Encoding Layers
@@ -263,7 +280,7 @@ class LinearEncoder2(nn.Module):
         return x
 
 
-class LinearDecoder2(nn.Module):
+class LinearDecoder2(Model):
     def __init__(self):
         super(LinearDecoder2, self).__init__()
         # Decoding Layers
@@ -276,7 +293,7 @@ class LinearDecoder2(nn.Module):
         return x
 
 
-class LinearAutoencoder2(nn.Module):
+class LinearAutoencoder2(Model):
     def __init__(self):
         super(LinearAutoencoder2, self).__init__()
         self.encoder = LinearEncoder2()

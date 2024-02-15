@@ -31,3 +31,6 @@ class Ui_pred(Pages):
         "li.checked::marker { content: \"\\2612\"; }\n"
         "</style></head><body style=\" font-family:\'.AppleSystemUIFont\'; font-size:13pt; font-weight:400; font-style:normal;\">\n"
         "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">predictor page</p></body></html>"))
+
+    def closeEvent(self, event):
+        super().closeEvent(event)

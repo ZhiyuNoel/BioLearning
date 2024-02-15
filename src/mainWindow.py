@@ -208,5 +208,6 @@ class Ui_MainWindow(QMainWindow):
         self.subpage.setCurrentIndex(index)
 
     def closeEvent(self, event):
-        self.subpages['Ui_encoder'].close()
+        for pages in self.subpages.values():
+            pages.close()
         super().closeEvent(event)

@@ -118,7 +118,6 @@ class Ui_inputpage(Pages):
         self.clearInput.clicked.connect(lambda: self.send_url(self.input_trans))
         self.clearInput.clicked.connect(lambda: self.clear())
 
-
     def choose_file(self):  # 槽函数
         video_file = ('.avi', '.mp4')
         directory_path = QFileDialog.getExistingDirectory(self, "Select Directory", "./")
@@ -259,3 +258,6 @@ class Ui_inputpage(Pages):
 
     def get_info(self):
         return "hello world"
+
+    def closeEvent(self, event):
+        super().closeEvent(event)

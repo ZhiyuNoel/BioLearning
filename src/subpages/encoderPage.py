@@ -9,7 +9,7 @@ from PyQt6.QtCore import pyqtSlot
 from PyQt6.QtGui import QFont, QImage, QPixmap
 
 from .Pages import Pages
-from ..model import TrainingThread, LinearAutoencoder, TestThread
+from ..model import TrainingThread, LinearAutoencoder, TestThread, LSTMAutoencoder
 from ..utils import loader_pipeline
 
 
@@ -25,8 +25,6 @@ class Ui_encoder(Pages):
 
     def __init__(self, encoPage):
         super().__init__()
-        self.test_thread = None
-        self.training_thread = None
         encoPage.setObjectName("Form")
         encoPage.resize(820, 531)
         self.verticalLayoutWidget = QtWidgets.QWidget(parent=encoPage)
@@ -225,6 +223,9 @@ class Ui_encoder(Pages):
         self.model = None
         QtCore.QMetaObject.connectSlotsByName(encoPage)
 
+        self.training_thread = TrainingThread(parent=self.verticalLayoutWidget)
+        self.test_thread = TestThread(parent=self.verticalLayoutWidget)
+
     def retranslateUi(self, Form):
         _translate = QtCore.QCoreApplication.translate
         Form.setWindowTitle(_translate("Form", "Form"))
@@ -276,12 +277,9 @@ class Ui_encoder(Pages):
                         "batch_size": self.batch_size, "win_stride": 2, "imgz": (25, 25)}
         trainLoader, testLoader = loader_pipeline(**loader_kargs)
         self.textBrowser.setText("Data Load Complete")
-        
-        self.training_thread = TrainingThread(parent=self.verticalLayoutWidget)
-        self.test_thread = TestThread(parent=self.verticalLayoutWidget)
-        self.model = LinearAutoencoder()
+        self.model = LSTMAutoencoder()
         self.training_thread.set_parameters(model=self.model, data_loader=trainLoader,
-                                                                   start_lr=self.start_lr, end_lr=self.end_lr)
+                                            start_lr=self.start_lr, end_lr=self.end_lr)
         self.test_thread.set_parameters(model=self.model, data_loader=testLoader)
         self.test_thread.is_running = True
         self.training_thread.is_running = True
@@ -366,8 +364,6 @@ class Ui_encoder(Pages):
         self.pause_training()
         self.test_thread.update_model(self.model)
         if not self.test_thread.isRunning():
-            # self.test_thread.update_progress.connect(self.update_progress_bar)
-            # self.test_thread.update_text.connect(self.update_text_browser)
             self.test_thread.update_pic.connect(self.update_image)
             self.test_thread.start()
         elif self.test_thread.paused:
@@ -382,10 +378,12 @@ class Ui_encoder(Pages):
         self.pauseTest.setVisible(False)
 
     def closeEvent(self, event):
-        self.test_thread.stop()
-        self.test_thread.wait()
-        self.training_thread.stop()
-        self.training_thread.wait()
+        if self.test_thread.isRunning():
+            self.test_thread.stop()
+            self.test_thread.wait()
+        if self.training_thread.isRunning():
+            self.training_thread.stop()
+            self.training_thread.wait()
         super().closeEvent(event)  # 继续执行父类的closeEvent方法
 
     @pyqtSlot(int)

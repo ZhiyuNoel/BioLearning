@@ -286,3 +286,6 @@ class Ui_model(Pages):
 
     def send_dict(self, dict):
         self._signal_model_dict.emit(dict)
+
+    def closeEvent(self, event):
+        super().closeEvent(event)

@@ -6,8 +6,8 @@ from src import mainWindow
 
 
 class mainPage(QMainWindow):
-    def __init__(self, parent=None):
-        super().__init__(parent)
+    def __init__(self):
+        super().__init__()
         self.ui = mainWindow.Ui_MainWindow(self)  # 初始化UI
         self.ui.click_bind()  # 假设这是绑定信号和槽的方法
 

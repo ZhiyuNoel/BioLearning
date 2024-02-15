@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import QWidget
 
 class Pages(QWidget):
     _signal = pyqtSignal(str)
+
     def __init__(self):
         super().__init__()
 
@@ -13,4 +14,6 @@ class Pages(QWidget):
     def retranslateUi(self, Form):
         pass
 
-
+    @abstractmethod
+    def closeEvent(self, event):
+        pass

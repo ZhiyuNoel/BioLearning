@@ -12,6 +12,7 @@ from torch import nn, optim
 from torch.utils.data import DataLoader
 
 from src.model import *
+from src.model.LSTM import Model
 from src.utils import increment_path, loader_pipeline
 
 FILE = Path(__file__).resolve()
@@ -35,9 +36,12 @@ class ModelThread(QThread):
         self.device = select_device("mps" if torch.backends.mps.is_available() else "0") if device is None else device
         self.criterion = nn.MSELoss()
 
-    def init_parameter(self, model: nn.Module, dataloader: DataLoader):
+    def init_parameter(self, model: Model, dataloader: DataLoader):
         self.model = model.to(self.device)
+        self.model.load_device(device=self.device)
         self.data_loader = dataloader
+        self.is_running = True
+        self.paused = False
 
     def set_parameters(self, *args, **kwargs):
         pass
@@ -74,17 +78,16 @@ class TestThread(ModelThread):
             with torch.no_grad():
                 for testImgs, _ in self.data_loader:
                     testImgs = testImgs.to(self.device)
-                    reconstructed_imgs = self.model(testImgs, self.device)
-                    for index, (tFrame, rFrame) in enumerate(zip(testImgs[0], reconstructed_imgs[0])):
-                        if self.paused or not self.is_running:
+                    reconstructed_imgs = self.model(testImgs)
+                    for tFrame, rFrame in zip(testImgs[0], reconstructed_imgs[0]):
+                        while self.paused and self.is_running:
+                            QEventLoop().processEvents()
+                        if not self.is_running:
                             break
-                        if index % 1000 == 0:
-                            self.process_images([tFrame, rFrame])
-                    if not self.is_running:
-                        break
+                        self.msleep(17)
+                        self.process_images([tFrame, rFrame])
 
-
-    def set_parameters(self, model: nn.Module, data_loader: DataLoader):
+    def set_parameters(self, model: Model, data_loader: DataLoader):
         super().init_parameter(model=model, dataloader=data_loader)
 
 
@@ -95,9 +98,8 @@ class TrainingThread(ModelThread):
         self.start_lr = None
         self.optimizer = None
 
-    def set_parameters(self, model: nn.Module, data_loader: DataLoader, start_lr, end_lr):
-        self.model = model.to(self.device)
-        self.data_loader = data_loader
+    def set_parameters(self, model: Model, data_loader: DataLoader, start_lr, end_lr):
+        self.init_parameter(model=model, dataloader=data_loader)
         self.start_lr = start_lr
         self.optimizer = optim.Adam(self.model.parameters(), lr=start_lr)
         self.start_lr = start_lr
@@ -119,14 +121,12 @@ class TrainingThread(ModelThread):
             EPOCH += 1
             text += f" \n EPOCH {EPOCH}: "
             self.optimizer.param_groups[0]['lr'] = self.start_lr  # 重置为初始学习率
-            for step, (frames, labels) in enumerate(self.data_loader):
-                if not self.is_running:
-                    break
-                while self.paused:
+            for step, (frames, _) in enumerate(self.data_loader):
+                while self.paused and self.is_running:
                     QEventLoop().processEvents()
-                frames, labels = frames.to(device=self.device), labels.to(device=self.device)
+                frames = frames.to(device=self.device)
                 self.optimizer.zero_grad()
-                outputs = self.model(frames, self.device)
+                outputs = self.model(frames)
                 loss = self.criterion(outputs, frames)
                 loss.backward()
                 # 更新参数
@@ -136,7 +136,8 @@ class TrainingThread(ModelThread):
                     self.process_images([frames[0, 0], outputs[0, 0]])
                 self.update_progress.emit(step)  # 发送进度信号
                 self.update_text.emit(text + f"Step {step}: Loss: {loss}")  # 发送文本更新信号
-
+                if not self.is_running:
+                    break
             text += f"Step {step}: Loss: {loss}"
 
 def autoencoder_test(model: nn.Module, device, dataloader, criterion):
@@ -185,7 +186,7 @@ def run(train_video_path, train_label_path,
         if weight is not None:
             Autoencoder = model_loader(weight, device)
         else:
-            Autoencoder = LSTMAutoencoder(device)
+            Autoencoder = LSTMAutoencoder()
         criterion = nn.MSELoss()
         if train:
             optimizer = optim.Adam(Autoencoder.parameters(), lr=learning_rate)
