@@ -92,11 +92,12 @@ class TestThread(ModelThread):
 
 
 class TrainingThread(ModelThread):
-    def __init__(self, parent):
+    def __init__(self, parent, autoencode: bool):
         super().__init__(parent)
         self.schedule = None
         self.start_lr = None
         self.optimizer = None
+        self.autoencode = autoencode
 
     def set_parameters(self, model: Model, data_loader: DataLoader, start_lr, end_lr):
         self.init_parameter(model=model, dataloader=data_loader)
@@ -117,28 +118,48 @@ class TrainingThread(ModelThread):
     def run(self):
         text = "Start Training: "
         EPOCH = 0
+        if not self.autoencode:
+            TP, TN, FP, FN = 0, 0, 0, 0
+            threshold = 1.0e-01
+            sample_total = 0
         while self.is_running:
             EPOCH += 1
             text += f" \n EPOCH {EPOCH}: "
             self.optimizer.param_groups[0]['lr'] = self.start_lr  # 重置为初始学习率
-            for step, (frames, _) in enumerate(self.data_loader):
+            for step, (frames, labels) in enumerate(self.data_loader):
                 while self.paused and self.is_running:
                     QEventLoop().processEvents()
-                frames = frames.to(device=self.device)
+                frames, labels = frames.to(device=self.device), labels.to(device=self.device)
                 self.optimizer.zero_grad()
                 outputs = self.model(frames)
-                loss = self.criterion(outputs, frames)
+                comp = frames if self.autoencode else labels.float()
+                loss = self.criterion(outputs, comp)
                 loss.backward()
                 # 更新参数
                 self.optimizer.step()
                 self.schedule.step()
-                if step % 10 == 0:
+                if not self.autoencode:
+                    predicted = (outputs >= threshold).float()  # 预测结果大于等于阈值的为1，否则为0
+                    TP += (predicted * comp).sum().item()
+                    TN += ((1 - predicted) * (1 - comp)).sum().item()
+                    FP += (predicted * (1 - comp)).sum().item()
+                    FN += ((1 - predicted) * comp).sum().item()
+                    sample_total += comp.numel()  # 更新样本总数
+                    precision = TP / (TP + FP) if (TP + FP) > 0 else 0
+                    comp += comp.numel()  # 更新样本总数
+
+                if step % 10 == 0 and self.autoencode:
                     self.process_images([frames[0, 0], outputs[0, 0]])
                 self.update_progress.emit(step)  # 发送进度信号
-                self.update_text.emit(text + f"Step {step}: Loss: {loss}")  # 发送文本更新信号
+                self.update_text.emit(text + f"Step {step}: Precision: {loss}")  # 发送文本更新信号
                 if not self.is_running:
                     break
             text += f"Step {step}: Loss: {loss}"
+            if not self.autoencode:
+                avg_accuracy = ((TP + TN) / sample_total)
+                precision = TP / (TP + FP) if (TP + FP) > 0 else 0
+                recall = TP / (TP + FN) if (TP + FN) > 0 else 0
+                text += f"\nAverage Accuracy: {avg_accuracy}\nPrecision: {precision}\nRecall:{recall}"
 
 def autoencoder_test(model: nn.Module, device, dataloader, criterion):
     model.eval()
@@ -214,7 +235,7 @@ def run(train_video_path, train_label_path,
             predictor = model_loader(weight, device=device)
         else:
             Encoder = LSTMEncoder()
-            predictor = Predictor(extractor=Encoder, device=device).to(device=device)
+            predictor = Predictor(extractor=Encoder).to(device=device)
 
         if train:
             criterion = nn.BCELoss()
@@ -227,7 +248,8 @@ def run(train_video_path, train_label_path,
             score, test_loss = precision_cal(predictor, test_loader, device)
             print(f"scores for test = {score}; Average test loss = {test_loss}", end="   ")
             # get the predicted index for results:
-            # post_result = result_post_processing(predictor=predictor, dataloader=test_loader, device=device)
+            post_result = result_post_processing(predictor=predictor, dataloader=test_loader, device=device)
+            print(post_result)
         if save:
             Pre_proj = ROOT / "runs/predict"
             Pre_save_dir = increment_path(Path(Pre_proj) / name, exist_ok=False)  # increment run
@@ -276,6 +298,7 @@ if __name__ == "__main__":
     opt.autoencode = False
     opt.predict = True
     opt.test = True
-    opt.train = False
-    opt.weight = "runs/predict/exp3/predictor.pt"
+    opt.train = True
+    opt.weight = None
+    # opt.weight = "runs/predict/exp3/predictor.pt"
     main(opt)

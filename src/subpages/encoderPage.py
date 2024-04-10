@@ -223,7 +223,7 @@ class Ui_encoder(Pages):
         self.model = None
         QtCore.QMetaObject.connectSlotsByName(encoPage)
 
-        self.training_thread = TrainingThread(parent=self.verticalLayoutWidget)
+        self.training_thread = TrainingThread(parent=self.verticalLayoutWidget, autoencode=True)
         self.test_thread = TestThread(parent=self.verticalLayoutWidget)
 
     def retranslateUi(self, Form):
@@ -277,7 +277,7 @@ class Ui_encoder(Pages):
                         "batch_size": self.batch_size, "win_stride": 2, "imgz": (25, 25)}
         trainLoader, testLoader = loader_pipeline(**loader_kargs)
         self.textBrowser.setText("Data Load Complete")
-        self.model = LSTMAutoencoder()
+        self.model = LinearAutoencoder()
         self.training_thread.set_parameters(model=self.model, data_loader=trainLoader,
                                             start_lr=self.start_lr, end_lr=self.end_lr)
         self.test_thread.set_parameters(model=self.model, data_loader=testLoader)
@@ -314,18 +314,6 @@ class Ui_encoder(Pages):
 
         # 适应标签大小
         self.orgImgWin.setScaledContents(True)
-        self.recImgWin.setScaledContents(True)
-
-    def send_data(self, str_data):
-        self._signal.emit(str_data)
-
-    def receive_url(self, input_url):
-        self.input_url = input_url
-        print(self.input_url)
-
-    def receive_model(self, model_dict):
-        self.model_info = model_dict
-        print(self.model_info)
 
     def start_train_pipeline(self):
         self.pause_test()
@@ -393,3 +381,14 @@ class Ui_encoder(Pages):
     @pyqtSlot(str)
     def update_text_browser(self, text):
         self.textBrowser.setText(text)
+
+        self.recImgWin.setScaledContents(True)
+
+    def send_data(self, str_data):
+        self._signal.emit(str_data)
+
+    def receive_url(self, input_url):
+        self.input_url = input_url
+
+    def receive_model(self, model_dict):
+        self.model_info = model_dict

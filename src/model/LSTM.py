@@ -233,11 +233,11 @@ class Predictor(Model):
     num_class = 1
     hidden_size1 = 64
     hidden_size2 = 32
+    device = None
 
-    def __init__(self, extractor, device, feature_size=128, num_class=1):
+    def __init__(self, extractor, feature_size=128, num_class=1):
         super(Predictor, self).__init__()
-        self.device = device
-        self.extractor = extractor.to(device=self.device)
+        self.extractor = extractor
         self.num_class = num_class
 
         self.LSTM_classifier = nn.LSTM(feature_size, self.hidden_size1, 1, batch_first=True)  ## 用lstm layer 处理序列，输出为64
@@ -258,6 +258,9 @@ class Predictor(Model):
 
         return out.squeeze(-1)
 
+    def load_device(self, device):
+        super().load_device(device)
+        self.extractor.to(device=self.device)
 
 '''
 ========================================================================================================================

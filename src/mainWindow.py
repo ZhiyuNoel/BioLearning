@@ -149,8 +149,6 @@ class Ui_MainWindow(QMainWindow):
         self.interpretationButton.setText(_translate("MainWindow", "Interpretation"))
 
     def click_bind(self):
-        self.autoencodeButton.clicked.connect(self.send_url)
-        self.autoencodeButton.clicked.connect(self.send_model)
         self.inputButton.clicked.connect(lambda: self.page_switch_clicked(0))
         self.modelButton.clicked.connect(lambda: self.page_switch_clicked(1))
         self.autoencodeButton.clicked.connect(lambda: self.page_switch_clicked(2))
@@ -160,6 +158,10 @@ class Ui_MainWindow(QMainWindow):
         self.eventPredictorButton.clicked.connect(lambda: self.page_switch_clicked(6))
         self.eventEncoderButton.clicked.connect(lambda: self.page_switch_clicked(7))
         self.interpretationButton.clicked.connect(lambda: self.page_switch_clicked(8))
+        self.autoencodeButton.clicked.connect(self.send_url)
+        self.autoencodeButton.clicked.connect(self.send_model)
+        self.predictorButton.clicked.connect(self.send_url)
+        self.predictorButton.clicked.connect(self.send_model)
 
     def stack_fill(self):
         # Check if the lists have the same length
@@ -184,6 +186,8 @@ class Ui_MainWindow(QMainWindow):
         self.subpages["Ui_model"]._signal_model_dict.connect(self.load_model)
         self._signal_url.connect(self.subpages["Ui_encoder"].receive_url)
         self._signal_model.connect(self.subpages["Ui_encoder"].receive_model)
+        self._signal_url.connect(self.subpages["Ui_pred"].receive_url)
+        self._signal_model.connect(self.subpages["Ui_pred"].receive_model)
         # self._signal_model.connect(self.subpage["Ui_pred"])
 
     def load_url(self, input_url):
