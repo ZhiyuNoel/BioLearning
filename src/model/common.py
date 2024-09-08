@@ -46,7 +46,7 @@ def precision_cal(predictor, dataloader, device):
         FP = 0
         FN = 0
 
-        for testFrames, testLabel in dataloader:  # 假设test_loader是您的测试数据加载器
+        for testFrames, testLabel in dataloader:  # 假设test_loader是您的测试数据加载器\
             testFrames, testLabel = testFrames.to(device), testLabel.to(device)
             outputs = predictor(testFrames)
             test_loss += criterion(outputs, testLabel.float()).item()

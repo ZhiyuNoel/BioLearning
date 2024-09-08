@@ -1,0 +1,12 @@
+video_path:
+  - /Users/dongzhiyu/Desktop/ICL Collection/Individual Project/BioLearning/RawData/Dragonfly_Visual_Neuron/HighFPSCut
+
+description_path:
+  - /Users/dongzhiyu/Desktop/ICL Collection/Individual Project/BioLearning/RawData/Dragonfly_Visual_Neuron/CubeGesture
+
+label_path:
+  - /Users/dongzhiyu/Desktop/ICL Collection/Individual Project/BioLearning/RawData/Dragonfly_Visual_Neuron/SpikeTrainDelay
+
+test_output_path:
+  - /Users/dongzhiyu/Desktop/ICL Collection/Individual Project/BioLearning/src/runs/predict/exp
+

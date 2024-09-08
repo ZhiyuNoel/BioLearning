@@ -7,4 +7,5 @@ from .eveModelPage import *
 from .evePredPage import *
 from .eveEncoderPage import *
 from .encoderPage import *
+from .netConnectionPage import *
 

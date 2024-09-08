@@ -29,7 +29,7 @@ class ModelThread(QThread):
 
     def __init__(self, parent, device=None):
         super().__init__(parent=parent)
-        self.model=None
+        self.model = None
         self.data_loader = None
         self.is_running = True
         self.paused = False
@@ -161,6 +161,7 @@ class TrainingThread(ModelThread):
                 recall = TP / (TP + FN) if (TP + FN) > 0 else 0
                 text += f"\nAverage Accuracy: {avg_accuracy}\nPrecision: {precision}\nRecall:{recall}"
 
+
 def autoencoder_test(model: nn.Module, device, dataloader, criterion):
     model.eval()
     test_loss = 0
@@ -184,6 +185,7 @@ def run(train_video_path, train_label_path,
         window_size=100,  ## Window Size for sampling
         batch_size=10,  ## batch size
         win_stride=2,  ## The length of step for sampling
+        time_delay=1,
         imgz=(25, 25),  ## resize image
         device="",  ## cuda device if have
         name='exp',  ## The save path for experiment
@@ -196,13 +198,17 @@ def run(train_video_path, train_label_path,
     train_loader, test_loader = loader_pipeline(train_video=train_video_path, train_label=train_label_path,
                                                 test_video=test_video_path, test_label=test_label_path,
                                                 window_size=window_size, win_stride=win_stride, imgz=imgz,
-                                                batch_size=batch_size)
+                                                batch_size=batch_size, time_delay=time_delay)
 
     ## Set device selection
     device = select_device(device)
     ## Model Load
     learning_rate = 0.0001
     EPOCHS = 10
+    '''
+    autoencoder 仅用于验证autoencoder对视频编码和视频解码
+    并验证解码结果于编码前视频的匹配率，分别加载了autoencoder中的encoder和decoder
+    '''
     if autoencode:
         if weight is not None:
             Autoencoder = model_loader(weight, device)
@@ -230,6 +236,11 @@ def run(train_video_path, train_label_path,
             print(f"The trained model is saved in: {AE_save_dir}/autoencoder.pt", end="")
         print("\n")
 
+    '''
+    Predictor 加载视频数据和label数据并训练预测模型，网络包含encoder用于特征提取，和lstm层用于时序分析
+    并验证模型预测结果的accuracy 和 precision
+    '''
+
     if predict:
         if weight is not None:
             predictor = model_loader(weight, device=device)
@@ -248,8 +259,8 @@ def run(train_video_path, train_label_path,
             score, test_loss = precision_cal(predictor, test_loader, device)
             print(f"scores for test = {score}; Average test loss = {test_loss}", end="   ")
             # get the predicted index for results:
-            post_result = result_post_processing(predictor=predictor, dataloader=test_loader, device=device)
-            print(post_result)
+            # post_result = result_post_processing(predictor=predictor, dataloader=test_loader, device=device)
+            # print(post_result)
         if save:
             Pre_proj = ROOT / "runs/predict"
             Pre_save_dir = increment_path(Path(Pre_proj) / name, exist_ok=False)  # increment run
@@ -258,7 +269,7 @@ def run(train_video_path, train_label_path,
             print(f"The trained model state dictionary is saved in: {Pre_save_dir}/predictor.pt", end="")
         print("\n")
 
-    return
+    return score[1]
 
 
 def parse_opt():
@@ -266,7 +277,8 @@ def parse_opt():
     parser.add_argument("--test_video_path", "-tv", type=str, default="", help="The path for test video dir")
     parser.add_argument("--test_label_path", "-tl", type=str, default="", help="The path for test label dir")
     parser.add_argument("--weight", default=None, help="model path(s)")
-    parser.add_argument("--window_size", "-w", type=int, default=100, help="The window size for video sampling")
+    parser.add_argument("--window_size", "-w", type=int, default=100, help="The window size for sequence sampling")
+    parser.add_argument("--time_delay", "-td", type=int, default=1, help="The time delay for stimulus response")
     parser.add_argument("--batch_size", "-bz", type=int, default=10, help="The size for data in one batch")
     parser.add_argument("--win_stride", "-stride", type=int, default=2,
                         help="The step length of sliding window for video sampling")
@@ -286,18 +298,25 @@ def parse_opt():
 
 
 def main(opt):
-    # check_requirements(ROOT / "requirements.txt", exclude=("tensorboard", "thop"))
-    video_path = '../InputVideo/Train_Video'
-    label_path = '../InputVideo/Train_Label'
-    run(train_video_path=video_path, train_label_path=label_path, **vars(opt))
+    video_path = '../RawData/InputVideo/Train_Video'
+    label_path = '../RawData/InputVideo/Train_Label'
+    precisions = []
+    for time_delay in range(-8, 0):
+        for window_size in range(100, 300, 10):
+            print(f"The model is running with window size of {window_size}, and time delay of {time_delay}")
+            opt.window_size = window_size
+            opt.time_delay = time_delay
+            precision = run(train_video_path=video_path, train_label_path=label_path, **vars(opt))
+            precisions.append(precision)
 
+    print(precisions)
 
 if __name__ == "__main__":
     opt = parse_opt()
     opt.save = False
     opt.autoencode = False
-    opt.predict = True
     opt.test = True
+    opt.predict = True
     opt.train = True
     opt.weight = None
     # opt.weight = "runs/predict/exp3/predictor.pt"

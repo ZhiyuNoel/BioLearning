@@ -10,16 +10,16 @@ from PyQt6 import QtCore, QtWidgets
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import QMainWindow
 from src.subpages import (Ui_inputpage, Ui_model, Ui_encoder,
-                          Ui_pred, Ui_time, Ui_eveModel, Ui_evePre, Ui_eveEncoder, Ui_inter)
+                          Ui_pred, Ui_time, Ui_eveModel, Ui_evePre, Ui_eveEncoder, Ui_inter, Ui_netConnect)
 
 
 class Ui_MainWindow(QMainWindow):
     subpages = {}
     model_storage = {}
     input_url = []
-    pages = [Ui_inputpage, Ui_model, Ui_encoder, Ui_pred, Ui_time, Ui_eveModel,
+    pages = [Ui_netConnect, Ui_inputpage, Ui_model, Ui_encoder, Ui_pred, Ui_time, Ui_eveModel,
              Ui_evePre, Ui_eveEncoder, Ui_inter]
-    page_names = ["Ui_inputpage", "Ui_model", "Ui_encoder", "Ui_pred", "Ui_time", "Ui_eveModel",
+    page_names = ["Ui_netConnect", "Ui_inputpage", "Ui_model", "Ui_encoder", "Ui_pred", "Ui_time", "Ui_eveModel",
                   "Ui_evePre", "Ui_eveEncoder", "Ui_inter"]
     _signal_url = pyqtSignal(list)
     _signal_model = pyqtSignal(dict)
@@ -49,6 +49,11 @@ class Ui_MainWindow(QMainWindow):
         self.buttonLayout.setObjectName("verticalLayout")
 
         ## Select input button
+        self.netButton = QtWidgets.QPushButton(parent=self.verticalLayoutWidget_2)
+        self.netButton.setMinimumSize(QtCore.QSize(0, 50))
+        self.netButton.setObjectName("pushButton")
+        self.buttonLayout.addWidget(self.netButton)
+
         self.inputButton = QtWidgets.QPushButton(parent=self.verticalLayoutWidget_2)
         self.inputButton.setMinimumSize(QtCore.QSize(0, 50))
         self.inputButton.setObjectName("pushButton")
@@ -82,18 +87,21 @@ class Ui_MainWindow(QMainWindow):
         self.eventModelButton = QtWidgets.QPushButton(parent=self.verticalLayoutWidget_2)
         self.eventModelButton.setMinimumSize(QtCore.QSize(0, 50))
         self.eventModelButton.setObjectName("pushButton_7")
+        self.eventModelButton.setVisible(False)
         self.buttonLayout.addWidget(self.eventModelButton)
 
         ## Event predictor button
         self.eventPredictorButton = QtWidgets.QPushButton(parent=self.verticalLayoutWidget_2)
         self.eventPredictorButton.setMinimumSize(QtCore.QSize(0, 50))
         self.eventPredictorButton.setObjectName("pushButton_8")
+        self.eventPredictorButton.setVisible(False)
         self.buttonLayout.addWidget(self.eventPredictorButton)
 
         ## Event Autoencoder button
         self.eventEncoderButton = QtWidgets.QPushButton(parent=self.verticalLayoutWidget_2)
         self.eventEncoderButton.setMinimumSize(QtCore.QSize(0, 50))
         self.eventEncoderButton.setObjectName("pushButton_9")
+        self.eventEncoderButton.setVisible(False)
         self.buttonLayout.addWidget(self.eventEncoderButton)
 
         ## Interpretation button
@@ -101,6 +109,7 @@ class Ui_MainWindow(QMainWindow):
         self.interpretationButton.setEnabled(True)
         self.interpretationButton.setMinimumSize(QtCore.QSize(0, 50))
         self.interpretationButton.setObjectName("pushButton_10")
+        self.interpretationButton.setVisible(False)
         self.buttonLayout.addWidget(self.interpretationButton)
 
         policy_subpage = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Minimum,
@@ -138,26 +147,28 @@ class Ui_MainWindow(QMainWindow):
         _translate = QtCore.QCoreApplication.translate
         self.stack_fill()
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
+        self.netButton.setText(_translate("MainWindow", "Network Connection"))
         self.inputButton.setText(_translate("MainWindow", "Select Input"))
         self.modelButton.setText(_translate("MainWindow", "Select Model"))
         self.autoencodeButton.setText(_translate("MainWindow", "Train Autoencoder"))
         self.predictorButton.setText(_translate("MainWindow", "Train Predictor"))
-        self.timeButton.setText(_translate("MainWindow", "Event Time"))
+        self.timeButton.setText(_translate("MainWindow", "Heat Map"))
         self.eventModelButton.setText(_translate("MainWindow", "Select Event Model"))
         self.eventPredictorButton.setText(_translate("MainWindow", "Event Predictor"))
         self.eventEncoderButton.setText(_translate("MainWindow", "Event Autoencoder"))
         self.interpretationButton.setText(_translate("MainWindow", "Interpretation"))
 
     def click_bind(self):
-        self.inputButton.clicked.connect(lambda: self.page_switch_clicked(0))
-        self.modelButton.clicked.connect(lambda: self.page_switch_clicked(1))
-        self.autoencodeButton.clicked.connect(lambda: self.page_switch_clicked(2))
-        self.predictorButton.clicked.connect(lambda: self.page_switch_clicked(3))
-        self.timeButton.clicked.connect(lambda: self.page_switch_clicked(4))
-        self.eventModelButton.clicked.connect(lambda: self.page_switch_clicked(5))
-        self.eventPredictorButton.clicked.connect(lambda: self.page_switch_clicked(6))
-        self.eventEncoderButton.clicked.connect(lambda: self.page_switch_clicked(7))
-        self.interpretationButton.clicked.connect(lambda: self.page_switch_clicked(8))
+        self.netButton.clicked.connect(lambda: self.page_switch_clicked(0))
+        self.inputButton.clicked.connect(lambda: self.page_switch_clicked(1))
+        self.modelButton.clicked.connect(lambda: self.page_switch_clicked(2))
+        self.autoencodeButton.clicked.connect(lambda: self.page_switch_clicked(3))
+        self.predictorButton.clicked.connect(lambda: self.page_switch_clicked(4))
+        self.timeButton.clicked.connect(lambda: self.page_switch_clicked(5))
+        self.eventModelButton.clicked.connect(lambda: self.page_switch_clicked(6))
+        self.eventPredictorButton.clicked.connect(lambda: self.page_switch_clicked(7))
+        self.eventEncoderButton.clicked.connect(lambda: self.page_switch_clicked(8))
+        self.interpretationButton.clicked.connect(lambda: self.page_switch_clicked(9))
         self.autoencodeButton.clicked.connect(self.send_url)
         self.autoencodeButton.clicked.connect(self.send_model)
         self.predictorButton.clicked.connect(self.send_url)
@@ -188,7 +199,6 @@ class Ui_MainWindow(QMainWindow):
         self._signal_model.connect(self.subpages["Ui_encoder"].receive_model)
         self._signal_url.connect(self.subpages["Ui_pred"].receive_url)
         self._signal_model.connect(self.subpages["Ui_pred"].receive_model)
-        # self._signal_model.connect(self.subpage["Ui_pred"])
 
     def load_url(self, input_url):
         self.input_url = input_url

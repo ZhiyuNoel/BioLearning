@@ -231,29 +231,36 @@ Predictor
 
 class Predictor(Model):
     num_class = 1
-    hidden_size1 = 64
     hidden_size2 = 32
     device = None
 
-    def __init__(self, extractor, feature_size=128, num_class=1):
+    def __init__(self, extractor, feature_size=128, hidden_size1=64, num_class=1):
         super(Predictor, self).__init__()
-        self.extractor = extractor
-        self.num_class = num_class
+        self.hidden_size1 = hidden_size1
+        print(hidden_size1)
+        self.extractor = extractor  # 线性编码器用于特征提取
+        self.num_class = num_class  # 以可能性表示分类结果
+        self.num_layers = 1
 
-        self.LSTM_classifier = nn.LSTM(feature_size, self.hidden_size1, 1, batch_first=True)  ## 用lstm layer 处理序列，输出为64
+        self.LSTM_classifier = nn.LSTM(feature_size, self.hidden_size1, self.num_layers,
+                                       batch_first=True)  ## 用lstm layer 处理序列，输出为64
         self.fc_1 = nn.Linear(self.hidden_size1, self.hidden_size2)  ## 用全链接层分类 full connection layer 1
+        self.relu = nn.ReLU()
         self.fc_2 = nn.Linear(self.hidden_size2, self.num_class)  ## full connection layer 2
 
-    def forward(self, x):  ## input [batch_size, seq_len, 128]
-        x_out = self.extractor(x)
+    def forward(self, x):  # input [batch_size, seq_len, 1, 25, 25]
+        x_out = self.extractor(x)  # x_out [batch_size, seq_len, 128]
         if len(x_out) != 1:
             x_out = x_out[0]
-        batch_size, seq_len, features = x_out.size()
-        out, _ = self.LSTM_classifier(x_out)  ## out = [batch_size, seq_len, 64]
-        out = out.contiguous().view(-1, self.hidden_size1)  ## out = [batch_size * seq_len, 64]
-        out = self.fc_1(out)  # 中间层激活 out = [batch_size * seq_len, 32]
-        out = self.fc_2(out)  ## out = [batch_size * seq_len, 1]
-        out = out.view(batch_size, seq_len, -1)  ## [10, 5, 1]
+        # batch_size, seq_len, features = x_out.size()
+        out, _ = self.LSTM_classifier(x_out)  # out = [batch_size, seq_len, 64]
+        out = out[:, -1, :]
+        # out = [batch_size, 64] 只取lstm的时序分析结果的最后一项用于分类
+        # (因为最后一项通常包含一个序列最多的时序信息)
+
+        out = self.fc_1(out)  # 中间层激活 out = [batch_size, 32]
+        out = self.relu(out)  # 激活层
+        out = self.fc_2(out)  # out = [batch_size, 1]
         out = torch.sigmoid(out)
 
         return out.squeeze(-1)
@@ -261,6 +268,7 @@ class Predictor(Model):
     def load_device(self, device):
         super().load_device(device)
         self.extractor.to(device=self.device)
+
 
 '''
 ========================================================================================================================

@@ -327,7 +327,6 @@ class Ui_pred(Pages):
 
     def receive_url(self, input_url):
         self.input_url = input_url
-        print("predi", self.input_url)
 
     def closeEvent(self, event):
         if self.trainTread.isRunning():
@@ -337,4 +336,3 @@ class Ui_pred(Pages):
 
     def receive_model(self, model_dict):
         self.model_info = model_dict
-        print(self.model_info)
