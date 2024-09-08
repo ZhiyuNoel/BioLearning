@@ -1,0 +1,12 @@
+matplotlib==3.8.2
+natsort==8.4.0
+numpy==2.1.1
+opencv_python==4.7.0.72
+pandas==2.2.2
+PyQt6==6.7.1
+PyQt6_sip==13.6.0
+scipy==1.14.1
+seaborn==0.13.2
+torch==2.1.2
+torchvision==0.16.2
+tqdm==4.66.1
