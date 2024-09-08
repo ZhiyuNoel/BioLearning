@@ -1,19 +1,6 @@
 # BioLearning
 The individual project for Zhiyu Dong
 
-## Environment Setup:
-1. 
-
-
-## UI Development
-### 日志记录
-| 时间 | 目标文件 | 日志 | 状态 |
-|:---|:-----|:---|:---|
-|    |      |    |    |
-|    |      |    |    |
-|    |      |    |    |
-|    |      |    |    |
-
 ## Backend Development
 ### 日志记录
 | 时间        | 目标文件                                                                          | 日志                                                                                  | 状态                                                                                  |
