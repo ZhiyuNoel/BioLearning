@@ -13,11 +13,12 @@ pip install -r requirements.txt
 ```
 3. Run software:
    - if you are using the device with MacOS or Linux System, you need to firstly change your branch to macos
+     (This project is mainly developed and tested on the macos and linux)
      ```
      branch checkout macos 
      python3 main.py
      ```
-   - if you are using the device with Window, you need to change the branch to windows
+   - if you are using the device with Window, you need to change the branch to windows (Not Fully Developed)
      ```
      branch checkout windows
      python3 main.py
